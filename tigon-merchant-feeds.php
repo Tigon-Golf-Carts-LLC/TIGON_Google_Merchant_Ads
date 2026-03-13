@@ -37,6 +37,7 @@ function tmf_load() {
 	require_once TMF_PLUGIN_DIR . 'includes/class-field-mapper.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-feed-generator.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-google-feed.php';
+	require_once TMF_PLUGIN_DIR . 'includes/class-google-reviews-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-facebook-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-amazon-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-ebay-feed.php';
@@ -44,6 +45,7 @@ function tmf_load() {
 	require_once TMF_PLUGIN_DIR . 'includes/class-tiktok-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-custom-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-feed-endpoint.php';
+	require_once TMF_PLUGIN_DIR . 'includes/class-google-merchant-api.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-tigon-merchant-feeds.php';
 
 	if ( is_admin() ) {
@@ -52,6 +54,7 @@ function tmf_load() {
 	}
 
 	TMF_Feed_Endpoint::init();
+	TMF_Google_Merchant_API::init();
 }
 add_action( 'plugins_loaded', 'tmf_load', 20 );
 
@@ -70,12 +73,13 @@ function tmf_activate() {
 		update_option( 'tmf_feed_secret', wp_generate_password( 24, false ) );
 	}
 	$defaults = array(
-		'google'   => array( 'enabled' => true, 'label' => 'Google Merchant' ),
-		'facebook' => array( 'enabled' => true, 'label' => 'Facebook / Meta' ),
-		'amazon'   => array( 'enabled' => true, 'label' => 'Amazon' ),
-		'ebay'     => array( 'enabled' => true, 'label' => 'eBay' ),
-		'walmart'  => array( 'enabled' => true, 'label' => 'Walmart' ),
-		'tiktok'   => array( 'enabled' => true, 'label' => 'TikTok Shop' ),
+		'google'         => array( 'enabled' => true, 'label' => 'Google Merchant' ),
+		'google-reviews' => array( 'enabled' => true, 'label' => 'Google Merchant Reviews' ),
+		'facebook'       => array( 'enabled' => true, 'label' => 'Facebook / Meta' ),
+		'amazon'         => array( 'enabled' => true, 'label' => 'Amazon' ),
+		'ebay'           => array( 'enabled' => true, 'label' => 'eBay' ),
+		'walmart'        => array( 'enabled' => true, 'label' => 'Walmart' ),
+		'tiktok'         => array( 'enabled' => true, 'label' => 'TikTok Shop' ),
 	);
 	if ( ! get_option( 'tmf_feeds' ) ) {
 		update_option( 'tmf_feeds', $defaults );

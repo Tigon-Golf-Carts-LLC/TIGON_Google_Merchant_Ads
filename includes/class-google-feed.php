@@ -176,7 +176,22 @@ class TMF_Google_Feed extends TMF_Feed_Generator {
 				$xml .= '  <g:shipping_height>' . esc_xml( $data['height'] . ' ' . $data['dimension_unit'] ) . "</g:shipping_height>\n";
 			}
 
-			// g:shipping — explicit shipping cost (uses WC shipping class)
+			// g:shipping — explicit shipping info block
+			$shipping_country = get_option( 'woocommerce_default_country', 'US' );
+			if ( strpos( $shipping_country, ':' ) !== false ) {
+				$shipping_country = explode( ':', $shipping_country )[0];
+			}
+			$shipping_cost    = get_option( 'tmf_default_shipping_cost', '' );
+			$shipping_service = get_option( 'tmf_default_shipping_service', 'Standard' );
+			if ( ! empty( $shipping_cost ) ) {
+				$xml .= "  <g:shipping>\n";
+				$xml .= '    <g:country>' . esc_xml( $shipping_country ) . "</g:country>\n";
+				$xml .= '    <g:service>' . $this->xml_escape( $shipping_service ) . "</g:service>\n";
+				$xml .= '    <g:price>' . esc_xml( $this->format_price( $shipping_cost, $data['currency'] ) ) . "</g:price>\n";
+				$xml .= "  </g:shipping>\n";
+			}
+
+			// g:shipping_label
 			if ( ! empty( $data['shipping_label'] ) ) {
 				$xml .= '  <g:shipping_label>' . $this->xml_escape( $data['shipping_label'] ) . "</g:shipping_label>\n";
 			}

@@ -67,6 +67,24 @@ class TMF_Admin {
 			'tigon-custom-feeds',
 			array( __CLASS__, 'page_custom_feeds' )
 		);
+
+		add_submenu_page(
+			'tigon-merchant-feeds',
+			'Google API',
+			'Google API',
+			'manage_woocommerce',
+			'tigon-google-api',
+			array( __CLASS__, 'page_google_api' )
+		);
+
+		add_submenu_page(
+			'tigon-merchant-feeds',
+			'Stores',
+			'Stores',
+			'manage_woocommerce',
+			'tigon-stores',
+			array( __CLASS__, 'page_stores' )
+		);
 	}
 
 	/**
@@ -91,7 +109,7 @@ class TMF_Admin {
 		// --- Save feed settings ------------------------------------------------
 		if ( isset( $_POST['tmf_save_settings'] ) && check_admin_referer( 'tmf_settings_nonce' ) ) {
 			$feeds  = get_option( 'tmf_feeds', array() );
-			$slugs  = array( 'google', 'facebook', 'amazon', 'ebay', 'walmart', 'tiktok' );
+			$slugs  = array( 'google', 'google-reviews', 'facebook', 'amazon', 'ebay', 'walmart', 'tiktok' );
 			$posted = isset( $_POST['tmf_feeds_enabled'] ) ? (array) $_POST['tmf_feeds_enabled'] : array();
 			foreach ( $slugs as $s ) {
 				$feeds[ $s ]['enabled'] = in_array( $s, $posted, true );
@@ -104,6 +122,26 @@ class TMF_Admin {
 			if ( isset( $_POST['tmf_google_category_name'] ) ) {
 				update_option( 'tmf_google_category_name', sanitize_text_field( wp_unslash( $_POST['tmf_google_category_name'] ) ) );
 			}
+
+			// Shipping defaults.
+			if ( isset( $_POST['tmf_default_shipping_cost'] ) ) {
+				update_option( 'tmf_default_shipping_cost', sanitize_text_field( wp_unslash( $_POST['tmf_default_shipping_cost'] ) ) );
+			}
+			if ( isset( $_POST['tmf_default_shipping_service'] ) ) {
+				update_option( 'tmf_default_shipping_service', sanitize_text_field( wp_unslash( $_POST['tmf_default_shipping_service'] ) ) );
+			}
+
+			// Google Reviews feed toggle.
+			$feeds  = get_option( 'tmf_feeds', array() );
+			$posted = isset( $_POST['tmf_feeds_enabled'] ) ? (array) $_POST['tmf_feeds_enabled'] : array();
+			if ( in_array( 'google-reviews', $posted, true ) ) {
+				$feeds['google-reviews'] = array( 'enabled' => true, 'label' => 'Google Merchant Reviews' );
+			} else {
+				if ( isset( $feeds['google-reviews'] ) ) {
+					$feeds['google-reviews']['enabled'] = false;
+				}
+			}
+			update_option( 'tmf_feeds', $feeds );
 
 			add_action( 'admin_notices', function () {
 				echo '<div class="notice notice-success is-dismissible"><p>Feed settings saved.</p></div>';
@@ -171,6 +209,103 @@ class TMF_Admin {
 			add_action( 'admin_notices', function () {
 				echo '<div class="notice notice-warning is-dismissible"><p>Feed secret key regenerated. Update your feed URLs in all marketplaces.</p></div>';
 			} );
+		}
+
+		// --- Save Google API credentials ---------------------------------------
+		if ( isset( $_POST['tmf_save_google_api'] ) && check_admin_referer( 'tmf_google_api_nonce' ) ) {
+			if ( isset( $_POST['tmf_google_merchant_id'] ) ) {
+				update_option( 'tmf_google_merchant_id', sanitize_text_field( wp_unslash( $_POST['tmf_google_merchant_id'] ) ) );
+			}
+			if ( isset( $_POST['tmf_google_api_credentials'] ) ) {
+				// Store raw JSON (already validated below).
+				$json = wp_unslash( $_POST['tmf_google_api_credentials'] ); // phpcs:ignore
+				$decoded = json_decode( $json, true );
+				if ( $decoded && isset( $decoded['client_email'] ) ) {
+					update_option( 'tmf_google_api_credentials', $json );
+				} elseif ( ! empty( $json ) ) {
+					add_action( 'admin_notices', function () {
+						echo '<div class="notice notice-error is-dismissible"><p>Invalid JSON. Must be a Google service account key file.</p></div>';
+					} );
+				}
+			}
+			if ( isset( $_POST['tmf_google_sync_frequency'] ) ) {
+				$freq = sanitize_key( wp_unslash( $_POST['tmf_google_sync_frequency'] ) );
+				TMF_Google_Merchant_API::schedule_sync( $freq );
+			}
+			// Clear cached token on credential change.
+			delete_transient( 'tmf_google_access_token' );
+
+			add_action( 'admin_notices', function () {
+				echo '<div class="notice notice-success is-dismissible"><p>Google API settings saved.</p></div>';
+			} );
+		}
+
+		// --- Create Google data source -----------------------------------------
+		if ( isset( $_POST['tmf_create_data_source'] ) && check_admin_referer( 'tmf_google_api_nonce' ) ) {
+			$ds_name    = sanitize_text_field( wp_unslash( $_POST['tmf_ds_name'] ?? 'TIGON Merchant Feeds' ) );
+			$ds_country = sanitize_text_field( wp_unslash( $_POST['tmf_ds_country'] ?? 'US' ) );
+			$result     = TMF_Google_Merchant_API::create_data_source( $ds_name, $ds_country );
+			if ( is_wp_error( $result ) ) {
+				$error_msg = $result->get_error_message();
+				add_action( 'admin_notices', function () use ( $error_msg ) {
+					echo '<div class="notice notice-error is-dismissible"><p>Failed to create data source: ' . esc_html( $error_msg ) . '</p></div>';
+				} );
+			} else {
+				add_action( 'admin_notices', function () {
+					echo '<div class="notice notice-success is-dismissible"><p>Google API data source created successfully!</p></div>';
+				} );
+			}
+		}
+
+		// --- Trigger manual sync -----------------------------------------------
+		if ( isset( $_POST['tmf_trigger_sync'] ) && check_admin_referer( 'tmf_google_api_nonce' ) ) {
+			$sync_store = sanitize_key( wp_unslash( $_POST['tmf_sync_store'] ?? '' ) );
+			$results    = TMF_Google_Merchant_API::sync_all_products( $sync_store );
+			if ( isset( $results['error'] ) ) {
+				$err = $results['error'];
+				add_action( 'admin_notices', function () use ( $err ) {
+					echo '<div class="notice notice-error is-dismissible"><p>Sync failed: ' . esc_html( $err ) . '</p></div>';
+				} );
+			} else {
+				$synced = $results['synced'];
+				$total  = $results['total'];
+				$errors = $results['errors'];
+				add_action( 'admin_notices', function () use ( $synced, $total, $errors ) {
+					echo '<div class="notice notice-success is-dismissible"><p>Sync complete: ' . esc_html( $synced ) . '/' . esc_html( $total ) . ' products synced. ' . esc_html( $errors ) . ' errors.</p></div>';
+				} );
+			}
+		}
+
+		// --- Save stores -------------------------------------------------------
+		if ( isset( $_POST['tmf_save_stores'] ) && check_admin_referer( 'tmf_stores_nonce' ) ) {
+			$store_ids   = isset( $_POST['tmf_store_id'] ) ? (array) $_POST['tmf_store_id'] : array();
+			$store_names = isset( $_POST['tmf_store_name'] ) ? (array) $_POST['tmf_store_name'] : array();
+			$stores      = array();
+			foreach ( $store_ids as $idx => $sid ) {
+				$sid   = sanitize_key( $sid );
+				$sname = sanitize_text_field( wp_unslash( $store_names[ $idx ] ?? '' ) );
+				if ( ! empty( $sid ) && ! empty( $sname ) ) {
+					$stores[ $sid ] = $sname;
+				}
+			}
+			update_option( 'tmf_stores', $stores );
+			add_action( 'admin_notices', function () {
+				echo '<div class="notice notice-success is-dismissible"><p>Stores saved.</p></div>';
+			} );
+		}
+
+		// --- Add store ---------------------------------------------------------
+		if ( isset( $_POST['tmf_add_store'] ) && check_admin_referer( 'tmf_stores_nonce' ) ) {
+			$sid   = sanitize_key( wp_unslash( $_POST['tmf_new_store_id'] ?? '' ) );
+			$sname = sanitize_text_field( wp_unslash( $_POST['tmf_new_store_name'] ?? '' ) );
+			if ( ! empty( $sid ) && ! empty( $sname ) ) {
+				$stores = get_option( 'tmf_stores', array() );
+				$stores[ $sid ] = $sname;
+				update_option( 'tmf_stores', $stores );
+				add_action( 'admin_notices', function () {
+					echo '<div class="notice notice-success is-dismissible"><p>Store added.</p></div>';
+				} );
+			}
 		}
 	}
 
@@ -246,6 +381,8 @@ class TMF_Admin {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-feed-settings' ) ); ?>" class="button tmf-btn-primary">Feed Settings</a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-field-mapping' ) ); ?>" class="button tmf-btn-secondary">Field Mapping</a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-custom-feeds' ) ); ?>" class="button tmf-btn-secondary">Custom Feeds</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-google-api' ) ); ?>" class="button tmf-btn-secondary">Google API</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-stores' ) ); ?>" class="button tmf-btn-secondary">Stores</a>
 			</div>
 		</div>
 		<?php
@@ -273,12 +410,13 @@ class TMF_Admin {
 					<table class="form-table">
 					<?php
 					$all_slugs = array(
-						'google'   => 'Google Merchant',
-						'facebook' => 'Facebook / Meta',
-						'amazon'   => 'Amazon',
-						'ebay'     => 'eBay',
-						'walmart'  => 'Walmart',
-						'tiktok'   => 'TikTok Shop',
+						'google'         => 'Google Merchant',
+						'google-reviews' => 'Google Merchant Reviews',
+						'facebook'       => 'Facebook / Meta',
+						'amazon'         => 'Amazon',
+						'ebay'           => 'eBay',
+						'walmart'        => 'Walmart',
+						'tiktok'         => 'TikTok Shop',
 					);
 					foreach ( $all_slugs as $s => $lbl ) :
 						$checked = ! empty( $feeds[ $s ]['enabled'] );
@@ -307,6 +445,22 @@ class TMF_Admin {
 						<tr>
 							<th>Category Name</th>
 							<td><input type="text" name="tmf_google_category_name" value="<?php echo esc_attr( $google_cat_name ); ?>" class="regular-text"></td>
+						</tr>
+					</table>
+				</div>
+
+				<div class="tmf-card">
+					<h2>Default Shipping</h2>
+					<p>Set a default shipping cost to include in the <code>&lt;g:shipping&gt;</code> block of your Google feed. Leave blank to omit shipping from the feed (if configured at the Merchant Center account level).</p>
+					<table class="form-table">
+						<tr>
+							<th>Shipping Cost</th>
+							<td><input type="text" name="tmf_default_shipping_cost" value="<?php echo esc_attr( get_option( 'tmf_default_shipping_cost', '' ) ); ?>" class="regular-text" placeholder="e.g. 0.00 for free shipping">
+							<p class="description">Enter the amount only (e.g. <code>0.00</code> or <code>199.99</code>). Currency is pulled from WooCommerce.</p></td>
+						</tr>
+						<tr>
+							<th>Service Name</th>
+							<td><input type="text" name="tmf_default_shipping_service" value="<?php echo esc_attr( get_option( 'tmf_default_shipping_service', 'Standard' ) ); ?>" class="regular-text" placeholder="Standard"></td>
 						</tr>
 					</table>
 				</div>
@@ -538,6 +692,233 @@ class TMF_Admin {
 					<?php submit_button( 'Add Custom Feed', 'primary tmf-btn-primary', 'tmf_add_custom_feed' ); ?>
 				</form>
 			</div>
+		</div>
+		<?php
+	}
+
+	// =========================================================================
+	//  Google API page
+	// =========================================================================
+	public static function page_google_api() {
+		$merchant_id = get_option( 'tmf_google_merchant_id', '' );
+		$credentials = get_option( 'tmf_google_api_credentials', '' );
+		$data_source = get_option( 'tmf_google_data_source', '' );
+		$ds_display  = get_option( 'tmf_google_data_source_display', '' );
+		$frequency   = get_option( 'tmf_google_sync_frequency', 'disabled' );
+		$last_sync   = get_option( 'tmf_google_last_sync_results', array() );
+		$stores      = TMF_Google_Merchant_API::get_stores();
+
+		$has_creds = false;
+		if ( ! empty( $credentials ) ) {
+			$decoded   = json_decode( $credentials, true );
+			$has_creds = ! empty( $decoded['client_email'] );
+		}
+		?>
+		<div class="wrap tmf-wrap">
+			<div class="tmf-header">
+				<h1>Google Merchant API</h1>
+				<p class="tmf-subtitle">Push products directly to Google Merchant Center via the Merchant API.</p>
+			</div>
+
+			<form method="post">
+				<?php wp_nonce_field( 'tmf_google_api_nonce' ); ?>
+
+				<div class="tmf-card">
+					<h2>API Credentials</h2>
+					<table class="form-table">
+						<tr>
+							<th>Merchant Center Account ID</th>
+							<td>
+								<input type="text" name="tmf_google_merchant_id" value="<?php echo esc_attr( $merchant_id ); ?>" class="regular-text" placeholder="e.g. 123456789">
+								<p class="description">Your Google Merchant Center account number.</p>
+							</td>
+						</tr>
+						<tr>
+							<th>Service Account JSON Key</th>
+							<td>
+								<textarea name="tmf_google_api_credentials" class="large-text" rows="6" placeholder='Paste the entire contents of your service account .json key file here...'><?php echo esc_textarea( $credentials ); ?></textarea>
+								<p class="description">
+									Create a service account in <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank">Google Cloud Console</a>,
+									enable the <strong>Merchant API</strong>, and download the JSON key file.
+									Grant the service account access to your Merchant Center account.
+								</p>
+								<?php if ( $has_creds ) : ?>
+									<p><span class="tmf-badge" style="background:#28a745;">Connected</span> <code><?php echo esc_html( $decoded['client_email'] ); ?></code></p>
+								<?php endif; ?>
+							</td>
+						</tr>
+					</table>
+					<?php submit_button( 'Save API Settings', 'primary tmf-btn-primary', 'tmf_save_google_api' ); ?>
+				</div>
+
+				<div class="tmf-card">
+					<h2>API Data Source</h2>
+					<p>Google requires an API data source before products can be pushed. Create one or use an existing data source ID.</p>
+					<?php if ( ! empty( $data_source ) ) : ?>
+						<p><strong>Active Data Source:</strong> <code><?php echo esc_html( $data_source ); ?></code>
+						<?php if ( ! empty( $ds_display ) ) : ?> — <?php echo esc_html( $ds_display ); ?><?php endif; ?></p>
+					<?php else : ?>
+						<p><em>No data source configured.</em></p>
+					<?php endif; ?>
+					<table class="form-table">
+						<tr>
+							<th>Data Source Name</th>
+							<td><input type="text" name="tmf_ds_name" value="TIGON Merchant Feeds" class="regular-text"></td>
+						</tr>
+						<tr>
+							<th>Target Country</th>
+							<td><input type="text" name="tmf_ds_country" value="US" class="small-text"></td>
+						</tr>
+					</table>
+					<button type="submit" name="tmf_create_data_source" class="button tmf-btn-secondary">Create API Data Source</button>
+				</div>
+
+				<div class="tmf-card">
+					<h2>Automatic Sync Schedule</h2>
+					<p>Automatically push all WooCommerce products to Google Merchant Center on a recurring schedule.</p>
+					<table class="form-table">
+						<tr>
+							<th>Sync Frequency</th>
+							<td>
+								<select name="tmf_google_sync_frequency">
+									<option value="disabled" <?php selected( $frequency, 'disabled' ); ?>>Disabled</option>
+									<option value="tmf_every_6_hours" <?php selected( $frequency, 'tmf_every_6_hours' ); ?>>Every 6 Hours</option>
+									<option value="tmf_every_12_hours" <?php selected( $frequency, 'tmf_every_12_hours' ); ?>>Every 12 Hours</option>
+									<option value="daily" <?php selected( $frequency, 'daily' ); ?>>Daily</option>
+									<option value="twicedaily" <?php selected( $frequency, 'twicedaily' ); ?>>Twice Daily</option>
+								</select>
+							</td>
+						</tr>
+					</table>
+					<?php
+					$next = wp_next_scheduled( 'tmf_google_api_sync' );
+					if ( $next ) : ?>
+						<p>Next scheduled sync: <strong><?php echo esc_html( get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $next ), 'M j, Y g:i A' ) ); ?></strong></p>
+					<?php endif; ?>
+				</div>
+
+				<div class="tmf-card">
+					<h2>Manual Sync</h2>
+					<p>Push all products to Google Merchant Center now.</p>
+					<table class="form-table">
+						<tr>
+							<th>Filter by Store</th>
+							<td>
+								<select name="tmf_sync_store">
+									<option value="">All Stores</option>
+									<?php foreach ( $stores as $sid => $sname ) : ?>
+										<option value="<?php echo esc_attr( $sid ); ?>"><?php echo esc_html( $sname ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+					</table>
+					<button type="submit" name="tmf_trigger_sync" class="button tmf-btn-primary">Sync Now</button>
+
+					<?php if ( ! empty( $last_sync ) && isset( $last_sync['total'] ) ) : ?>
+						<div style="margin-top:16px; padding:12px; background:#f7f9fa; border:1px solid #BCC6CC; border-radius:4px;">
+							<strong>Last Sync Results:</strong><br>
+							Store: <?php echo esc_html( $last_sync['store'] ?? 'all' ); ?><br>
+							Products: <?php echo esc_html( $last_sync['synced'] ); ?>/<?php echo esc_html( $last_sync['total'] ); ?> synced<br>
+							Errors: <?php echo esc_html( $last_sync['errors'] ); ?><br>
+							Started: <?php echo esc_html( $last_sync['started'] ?? '' ); ?><br>
+							Finished: <?php echo esc_html( $last_sync['finished'] ?? '' ); ?>
+							<?php if ( ! empty( $last_sync['error_log'] ) ) : ?>
+								<details style="margin-top:8px;">
+									<summary>Error Details (<?php echo count( $last_sync['error_log'] ); ?>)</summary>
+									<ul style="margin-top:4px;">
+										<?php foreach ( array_slice( $last_sync['error_log'], 0, 20 ) as $err ) : ?>
+											<li>Product #<?php echo esc_html( $err['product_id'] ); ?> (<?php echo esc_html( $err['sku'] ); ?>): <?php echo esc_html( $err['error'] ); ?></li>
+										<?php endforeach; ?>
+									</ul>
+								</details>
+							<?php endif; ?>
+						</div>
+					<?php endif; ?>
+				</div>
+			</form>
+		</div>
+		<?php
+	}
+
+	// =========================================================================
+	//  Stores page
+	// =========================================================================
+	public static function page_stores() {
+		$stores = get_option( 'tmf_stores', array() );
+		?>
+		<div class="wrap tmf-wrap">
+			<div class="tmf-header">
+				<h1>Store Management</h1>
+				<p class="tmf-subtitle">Manage stores/locations for product sorting and per-store Google syncing.</p>
+			</div>
+
+			<form method="post">
+				<?php wp_nonce_field( 'tmf_stores_nonce' ); ?>
+
+				<?php if ( ! empty( $stores ) ) : ?>
+				<div class="tmf-card">
+					<h2>Your Stores</h2>
+					<p>Products can be assigned to stores via the <code>_tmf_store</code> custom field on each product.</p>
+					<table class="widefat tmf-feed-table">
+						<thead>
+							<tr>
+								<th>Store ID</th>
+								<th>Store Name</th>
+								<th>Products</th>
+							</tr>
+						</thead>
+						<tbody>
+						<?php
+						$by_store = TMF_Google_Merchant_API::get_products_by_store();
+						foreach ( $stores as $sid => $sname ) :
+							$count = isset( $by_store[ $sid ] ) ? $by_store[ $sid ]['count'] : 0;
+						?>
+							<tr>
+								<td>
+									<input type="text" name="tmf_store_id[]" value="<?php echo esc_attr( $sid ); ?>" class="regular-text">
+								</td>
+								<td>
+									<input type="text" name="tmf_store_name[]" value="<?php echo esc_attr( $sname ); ?>" class="regular-text">
+								</td>
+								<td><?php echo esc_html( $count ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+						<?php if ( isset( $by_store['_unassigned'] ) ) : ?>
+							<tr>
+								<td><em>—</em></td>
+								<td><em>Unassigned</em></td>
+								<td><?php echo esc_html( $by_store['_unassigned']['count'] ); ?></td>
+							</tr>
+						<?php endif; ?>
+						</tbody>
+					</table>
+					<?php submit_button( 'Save Stores', 'primary tmf-btn-primary', 'tmf_save_stores' ); ?>
+				</div>
+				<?php endif; ?>
+
+				<div class="tmf-card">
+					<h2>Add New Store</h2>
+					<table class="form-table">
+						<tr>
+							<th>Store ID</th>
+							<td><input type="text" name="tmf_new_store_id" class="regular-text" placeholder="e.g. store-tampa" pattern="[a-z0-9_-]+">
+							<p class="description">Lowercase, no spaces. Used as the store code for Google Merchant.</p></td>
+						</tr>
+						<tr>
+							<th>Store Name</th>
+							<td><input type="text" name="tmf_new_store_name" class="regular-text" placeholder="e.g. TIGON Tampa"></td>
+						</tr>
+					</table>
+					<?php submit_button( 'Add Store', 'secondary tmf-btn-secondary', 'tmf_add_store' ); ?>
+				</div>
+
+				<div class="tmf-card tmf-card-muted">
+					<h3>How to Assign Products to Stores</h3>
+					<p>Add a custom field named <code>_tmf_store</code> to any WooCommerce product with the store ID as the value. Products without a store assignment will sync under "All Stores".</p>
+					<p>You can bulk-assign stores using any WooCommerce bulk edit tool or via the product edit screen.</p>
+				</div>
+			</form>
 		</div>
 		<?php
 	}

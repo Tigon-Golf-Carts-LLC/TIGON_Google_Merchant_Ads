@@ -476,13 +476,29 @@ class TMF_Field_Mapper {
 	public static function map_availability( $status ) {
 		switch ( $status ) {
 			case 'instock':
-				return 'in_stock';
+				return 'in stock';
 			case 'outofstock':
-				return 'out_of_stock';
+				return 'out of stock';
 			case 'onbackorder':
 				return 'backorder';
 			default:
-				return 'in_stock';
+				return 'in stock';
+		}
+	}
+
+	/**
+	 * Map availability to Google Merchant API enum format (uppercase).
+	 */
+	public static function map_availability_api( $status ) {
+		switch ( $status ) {
+			case 'instock':
+				return 'IN_STOCK';
+			case 'outofstock':
+				return 'OUT_OF_STOCK';
+			case 'onbackorder':
+				return 'BACKORDER';
+			default:
+				return 'IN_STOCK';
 		}
 	}
 
