@@ -330,21 +330,33 @@ class TMF_Admin {
 	public static function page_field_mapping() {
 		$mappings = get_option( 'tmf_field_mappings', array() );
 		$fields   = array(
-			'title'            => 'Product Title',
-			'description'      => 'Description',
-			'short_description' => 'Short Description',
-			'price'            => 'Price',
-			'regular_price'    => 'Regular Price',
-			'sale_price'       => 'Sale Price',
-			'brand'            => 'Brand',
-			'gtin'             => 'GTIN / UPC / EAN',
-			'mpn'              => 'MPN',
-			'condition'        => 'Condition',
-			'image_link'       => 'Main Image URL',
-			'weight'           => 'Weight',
-			'color'            => 'Color',
-			'size'             => 'Size',
-			'material'         => 'Material',
+			// --- Google Required ---
+			'title'                     => 'Product Title (g:title)',
+			'description'               => 'Description (g:description)',
+			'image_link'                => 'Main Image URL (g:image_link)',
+			'brand'                     => 'Brand (g:brand)',
+			'gtin'                      => 'GTIN / UPC / EAN / ISBN (g:gtin)',
+			'mpn'                       => 'MPN (g:mpn)',
+			'condition'                 => 'Condition — new, refurbished, used (g:condition)',
+			// --- Google Pricing ---
+			'price'                     => 'Price (g:price)',
+			'regular_price'             => 'Regular Price',
+			'sale_price'                => 'Sale Price (g:sale_price)',
+			// --- Google Recommended ---
+			'short_description'         => 'Short Description / Highlights',
+			'color'                     => 'Color (g:color)',
+			'size'                      => 'Size (g:size)',
+			'material'                  => 'Material (g:material)',
+			'pattern'                   => 'Pattern (g:pattern)',
+			'weight'                    => 'Shipping Weight (g:shipping_weight)',
+			'ads_redirect'              => 'Ads Redirect URL (g:ads_redirect)',
+			'energy_efficiency_class'   => 'Energy Efficiency Class (g:energy_efficiency_class)',
+			// --- Google Ads Labels ---
+			'custom_label_0'            => 'Custom Label 0 (g:custom_label_0)',
+			'custom_label_1'            => 'Custom Label 1 (g:custom_label_1)',
+			'custom_label_2'            => 'Custom Label 2 (g:custom_label_2)',
+			'custom_label_3'            => 'Custom Label 3 (g:custom_label_3)',
+			'custom_label_4'            => 'Custom Label 4 (g:custom_label_4)',
 		);
 		?>
 		<div class="wrap tmf-wrap">
@@ -358,25 +370,83 @@ class TMF_Admin {
 
 				<div class="tmf-card">
 					<h2>Map Feed Fields to Custom Meta Keys</h2>
-					<p>Leave blank to use the default WooCommerce value. Enter a custom meta key to override.</p>
+					<p>Leave blank to use the default WooCommerce value. Enter a custom meta key (e.g. <code>_my_brand</code>) to override the default source.</p>
 					<table class="widefat tmf-mapping-table">
 						<thead>
 							<tr>
-								<th>Feed Field</th>
-								<th>Default Source</th>
+								<th>Google / Feed Field</th>
+								<th>Default WooCommerce Source</th>
 								<th>Custom Meta Key Override</th>
 							</tr>
 						</thead>
 						<tbody>
-						<?php foreach ( $fields as $key => $label ) : ?>
+						<?php
+						$wc_sources = array(
+							'title'                   => 'get_name()',
+							'description'             => 'get_description() → get_short_description()',
+							'image_link'              => 'get_image_id() → wp_get_attachment_url()',
+							'brand'                   => '_brand meta → product_brand taxonomy → Site Name',
+							'gtin'                    => 'get_global_unique_id() → _gtin → _global_unique_id → _barcode meta',
+							'mpn'                     => '_mpn meta → get_sku() fallback',
+							'condition'               => '_condition meta → defaults to "new"',
+							'price'                   => 'get_price()',
+							'regular_price'           => 'get_regular_price()',
+							'sale_price'              => 'get_sale_price()',
+							'short_description'       => 'get_short_description()',
+							'color'                   => 'Product attributes (Color/Colour) → _color meta',
+							'size'                    => 'Product attributes (Size) → _size meta',
+							'material'                => 'Product attributes (Material) → _material meta',
+							'pattern'                 => 'Product attributes (Pattern)',
+							'weight'                  => 'get_weight()',
+							'ads_redirect'            => '_ads_redirect meta',
+							'energy_efficiency_class' => '_energy_efficiency_class meta',
+							'custom_label_0'          => '_custom_label_0 meta',
+							'custom_label_1'          => '_custom_label_1 meta',
+							'custom_label_2'          => '_custom_label_2 meta',
+							'custom_label_3'          => '_custom_label_3 meta',
+							'custom_label_4'          => '_custom_label_4 meta',
+						);
+						foreach ( $fields as $key => $label ) : ?>
 							<tr>
-								<td><strong><?php echo esc_html( $label ); ?></strong> <code><?php echo esc_html( $key ); ?></code></td>
-								<td>WooCommerce default</td>
+								<td><strong><?php echo esc_html( $label ); ?></strong></td>
+								<td><code><?php echo esc_html( $wc_sources[ $key ] ?? 'WooCommerce default' ); ?></code></td>
 								<td>
 									<input type="text" name="tmf_map_field[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $mappings[ $key ] ?? '' ); ?>" placeholder="_custom_meta_key" class="regular-text">
 								</td>
 							</tr>
 						<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="tmf-card tmf-card-muted">
+					<h3>Automatically Mapped Fields (no override needed)</h3>
+					<p>These fields are always pulled from WooCommerce and output automatically in the Google feed:</p>
+					<table class="widefat tmf-mapping-table">
+						<thead>
+							<tr>
+								<th>Google Field</th>
+								<th>WooCommerce Source</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr><td><code>g:id</code></td><td>Product ID — <code>get_id()</code></td></tr>
+							<tr><td><code>g:link</code></td><td>Permalink — <code>get_permalink()</code></td></tr>
+							<tr><td><code>g:availability</code></td><td>Stock status — <code>get_stock_status()</code> → in_stock / out_of_stock / backorder</td></tr>
+							<tr><td><code>g:google_product_category</code></td><td>Feed Settings → defaults to <code>3101</code> (Golf Carts)</td></tr>
+							<tr><td><code>g:product_type</code></td><td>WooCommerce category hierarchy path</td></tr>
+							<tr><td><code>g:item_group_id</code></td><td>Parent product ID — <code>get_parent_id()</code> (for variations)</td></tr>
+							<tr><td><code>g:canonical_link</code></td><td>Parent permalink for variations, own permalink for simple</td></tr>
+							<tr><td><code>g:additional_image_link</code></td><td>Gallery images — <code>get_gallery_image_ids()</code> (up to 10)</td></tr>
+							<tr><td><code>g:sale_price_effective_date</code></td><td>Sale dates — <code>get_date_on_sale_from()</code> / <code>get_date_on_sale_to()</code></td></tr>
+							<tr><td><code>g:shipping_weight</code></td><td>Product weight + unit — <code>get_weight()</code></td></tr>
+							<tr><td><code>g:shipping_length/width/height</code></td><td>Product dimensions — <code>get_length/width/height()</code></td></tr>
+							<tr><td><code>g:shipping_label</code></td><td>Shipping class — <code>get_shipping_class_id()</code></td></tr>
+							<tr><td><code>g:tax / g:tax_category</code></td><td>Tax status + class — <code>get_tax_status()</code> / <code>get_tax_class()</code></td></tr>
+							<tr><td><code>g:availability_date</code></td><td><code>_availability_date</code> meta (for backorder/preorder items)</td></tr>
+							<tr><td><code>g:product_highlight</code></td><td>Short description split into bullet points</td></tr>
+							<tr><td><code>g:product_detail</code></td><td>All product attributes as structured specs</td></tr>
+							<tr><td><code>g:identifier_exists</code></td><td>Auto-set to <code>false</code> when no GTIN or MPN is provided</td></tr>
 						</tbody>
 					</table>
 				</div>
