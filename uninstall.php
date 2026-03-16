@@ -29,6 +29,9 @@ delete_option( 'tmf_merchant_created' );
 // Stores.
 delete_option( 'tmf_stores' );
 
+// Rewrite version tracker.
+delete_option( 'tmf_rewrite_version' );
+
 // Clear cached access token.
 delete_transient( 'tmf_google_access_token' );
 

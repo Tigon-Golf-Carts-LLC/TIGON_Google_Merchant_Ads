@@ -319,8 +319,9 @@ class TMF_Admin {
 		$secret  = get_option( 'tmf_feed_secret', '' );
 		$product_count = self::get_product_count();
 		?>
-		<div class="wrap tmf-wrap">
+		<div class="wrap">
 			<?php self::render_header( 'TIGON Merchant Feeds', 'Product Feed Management for Golf Carts' ); ?>
+			<div class="tmf-wrap">
 
 			<div class="tmf-stats-row">
 				<div class="tmf-stat-card">
@@ -383,7 +384,7 @@ class TMF_Admin {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-google-api' ) ); ?>" class="button tmf-btn-secondary">Google API</a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-stores' ) ); ?>" class="button tmf-btn-secondary">Stores</a>
 			</div>
-		</div>
+		</div></div>
 		<?php
 	}
 
@@ -396,8 +397,9 @@ class TMF_Admin {
 		$google_cat_name = get_option( 'tmf_google_category_name', 'Vehicles & Parts > Vehicles > Golf Carts' );
 		$secret     = get_option( 'tmf_feed_secret', '' );
 		?>
-		<div class="wrap tmf-wrap">
+		<div class="wrap">
 			<?php self::render_header( 'Feed Settings' ); ?>
+			<div class="tmf-wrap">
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_settings_nonce' ); ?>
@@ -471,7 +473,7 @@ class TMF_Admin {
 
 				<?php submit_button( 'Save Settings', 'primary tmf-btn-primary', 'tmf_save_settings' ); ?>
 			</form>
-		</div>
+		</div></div>
 		<?php
 	}
 
@@ -510,8 +512,9 @@ class TMF_Admin {
 			'custom_label_4'            => 'Custom Label 4 (g:custom_label_4)',
 		);
 		?>
-		<div class="wrap tmf-wrap">
+		<div class="wrap">
 			<?php self::render_header( 'Field Mapping', 'Override default WooCommerce field mapping with custom meta keys.' ); ?>
+			<div class="tmf-wrap">
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_mapping_nonce' ); ?>
@@ -601,7 +604,7 @@ class TMF_Admin {
 
 				<?php submit_button( 'Save Mappings', 'primary tmf-btn-primary', 'tmf_save_mappings' ); ?>
 			</form>
-		</div>
+		</div></div>
 		<?php
 	}
 
@@ -611,8 +614,9 @@ class TMF_Admin {
 	public static function page_custom_feeds() {
 		$custom = get_option( 'tmf_custom_feeds', array() );
 		?>
-		<div class="wrap tmf-wrap">
+		<div class="wrap">
 			<?php self::render_header( 'Custom Feeds', 'Create unlimited additional marketplace feeds.' ); ?>
+			<div class="tmf-wrap">
 
 			<?php if ( ! empty( $custom ) ) : ?>
 			<div class="tmf-card">
@@ -683,7 +687,7 @@ class TMF_Admin {
 					<?php submit_button( 'Add Custom Feed', 'primary tmf-btn-primary', 'tmf_add_custom_feed' ); ?>
 				</form>
 			</div>
-		</div>
+		</div></div>
 		<?php
 	}
 
@@ -705,8 +709,9 @@ class TMF_Admin {
 			$has_creds = ! empty( $decoded['client_email'] );
 		}
 		?>
-		<div class="wrap tmf-wrap">
+		<div class="wrap">
 			<?php self::render_header( 'Google Merchant API', 'Push products directly to Google Merchant Center via the Merchant API.' ); ?>
+			<div class="tmf-wrap">
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_google_api_nonce' ); ?>
@@ -825,7 +830,7 @@ class TMF_Admin {
 					<?php endif; ?>
 				</div>
 			</form>
-		</div>
+		</div></div>
 		<?php
 	}
 
@@ -835,8 +840,9 @@ class TMF_Admin {
 	public static function page_stores() {
 		$stores = get_option( 'tmf_stores', array() );
 		?>
-		<div class="wrap tmf-wrap">
+		<div class="wrap">
 			<?php self::render_header( 'Store Management', 'Manage stores/locations for product sorting and per-store Google syncing.' ); ?>
+			<div class="tmf-wrap">
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_stores_nonce' ); ?>
@@ -904,7 +910,7 @@ class TMF_Admin {
 					<p>You can bulk-assign stores using any WooCommerce bulk edit tool or via the product edit screen.</p>
 				</div>
 			</form>
-		</div>
+		</div></div>
 		<?php
 	}
 
