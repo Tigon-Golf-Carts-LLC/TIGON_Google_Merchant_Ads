@@ -22,13 +22,15 @@ class TMF_Admin {
 	 * Register admin menu pages.
 	 */
 	public static function add_menu() {
+		$icon = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIxLjIiPjxwYXRoIGQ9Ik00IDEwYzAtMyAuOC01LjIgMi02LjRTOC44IDIgMTAgMi4yYy42LjEgMSAuNCAxLjQuNHMuOC0uMyAxLjQtLjRjMS4yLS4yIDIuOC4yIDQgMS40UzE5IDcgMTkgMTBjMCAyLjQtLjYgNC4yLTEuNiA1LjRzLTIuNCAyLTMuOCAyLjJoLTRjLTEuNC0uMi0yLjgtMS0zLjgtMi4yUzQgMTIuNCA0IDEweiIvPjxlbGxpcHNlIGN4PSI3LjIiIGN5PSI3LjgiIHJ4PSIxIiByeT0iLjciLz48ZWxsaXBzZSBjeD0iMTIuOCIgY3k9IjcuOCIgcng9IjEiIHJ5PSIuNyIvPjxwYXRoIGQ9Ik05LjIgMTBjLjItLjQuNi0uNy44LS43cy42LjMuOC43Ii8+PHBhdGggZD0iTTkgMTEuOGMuNC40IDEuNC40IDIgMCIvPjxlbGxpcHNlIGN4PSIxNiIgY3k9IjE0IiByeD0iMS42IiByeT0iLjYiLz48cGF0aCBkPSJNMTQuNCAxNHYyLjQiLz48cGF0aCBkPSJNMTcuNiAxNHYyLjQiLz48ZWxsaXBzZSBjeD0iMTYiIGN5PSIxNi40IiByeD0iMS42IiByeT0iLjYiLz48L3N2Zz4K';
+
 		add_menu_page(
 			'TIGON Merchant Feeds',
 			'TIGON Feeds',
 			'manage_woocommerce',
 			'tigon-merchant-feeds',
 			array( __CLASS__, 'page_dashboard' ),
-			'dashicons-rss',
+			$icon,
 			56
 		);
 
@@ -318,10 +320,7 @@ class TMF_Admin {
 		$product_count = self::get_product_count();
 		?>
 		<div class="wrap tmf-wrap">
-			<div class="tmf-header">
-				<h1>TIGON Merchant Feeds</h1>
-				<p class="tmf-subtitle">Product Feed Management for Golf Carts</p>
-			</div>
+			<?php self::render_header( 'TIGON Merchant Feeds', 'Product Feed Management for Golf Carts' ); ?>
 
 			<div class="tmf-stats-row">
 				<div class="tmf-stat-card">
@@ -398,9 +397,7 @@ class TMF_Admin {
 		$secret     = get_option( 'tmf_feed_secret', '' );
 		?>
 		<div class="wrap tmf-wrap">
-			<div class="tmf-header">
-				<h1>Feed Settings</h1>
-			</div>
+			<?php self::render_header( 'Feed Settings' ); ?>
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_settings_nonce' ); ?>
@@ -514,10 +511,7 @@ class TMF_Admin {
 		);
 		?>
 		<div class="wrap tmf-wrap">
-			<div class="tmf-header">
-				<h1>Field Mapping</h1>
-				<p class="tmf-subtitle">Override default WooCommerce field mapping with custom meta keys.</p>
-			</div>
+			<?php self::render_header( 'Field Mapping', 'Override default WooCommerce field mapping with custom meta keys.' ); ?>
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_mapping_nonce' ); ?>
@@ -618,10 +612,7 @@ class TMF_Admin {
 		$custom = get_option( 'tmf_custom_feeds', array() );
 		?>
 		<div class="wrap tmf-wrap">
-			<div class="tmf-header">
-				<h1>Custom Feeds</h1>
-				<p class="tmf-subtitle">Create unlimited additional marketplace feeds.</p>
-			</div>
+			<?php self::render_header( 'Custom Feeds', 'Create unlimited additional marketplace feeds.' ); ?>
 
 			<?php if ( ! empty( $custom ) ) : ?>
 			<div class="tmf-card">
@@ -715,10 +706,7 @@ class TMF_Admin {
 		}
 		?>
 		<div class="wrap tmf-wrap">
-			<div class="tmf-header">
-				<h1>Google Merchant API</h1>
-				<p class="tmf-subtitle">Push products directly to Google Merchant Center via the Merchant API.</p>
-			</div>
+			<?php self::render_header( 'Google Merchant API', 'Push products directly to Google Merchant Center via the Merchant API.' ); ?>
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_google_api_nonce' ); ?>
@@ -848,10 +836,7 @@ class TMF_Admin {
 		$stores = get_option( 'tmf_stores', array() );
 		?>
 		<div class="wrap tmf-wrap">
-			<div class="tmf-header">
-				<h1>Store Management</h1>
-				<p class="tmf-subtitle">Manage stores/locations for product sorting and per-store Google syncing.</p>
-			</div>
+			<?php self::render_header( 'Store Management', 'Manage stores/locations for product sorting and per-store Google syncing.' ); ?>
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_stores_nonce' ); ?>
@@ -926,6 +911,26 @@ class TMF_Admin {
 	// =========================================================================
 	//  Helpers
 	// =========================================================================
+
+	/**
+	 * Render the branded page header with TIGON logo.
+	 */
+	private static function render_header( $title, $subtitle = '' ) {
+		$logo_url = TMF_PLUGIN_URL . 'admin/img/tigon-logo.svg';
+		?>
+		<div class="tmf-header">
+			<div class="tmf-header-logo">
+				<img src="<?php echo esc_url( $logo_url ); ?>" alt="TIGON">
+			</div>
+			<div class="tmf-header-text">
+				<h1><?php echo esc_html( $title ); ?></h1>
+				<?php if ( $subtitle ) : ?>
+					<p class="tmf-subtitle"><?php echo esc_html( $subtitle ); ?></p>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
 
 	private static function get_product_count() {
 		$counts = wp_count_posts( 'product' );
