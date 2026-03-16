@@ -8,20 +8,20 @@ Generate and serve product feed URLs for Google Merchant Center, eBay, Amazon, W
 
 ## Features
 
-- **Google Merchant Feed** — XML feed with full Google Product Data Specification compliance. All products auto-categorized as `Vehicles & Parts > Vehicles > Golf Carts` (category 3101) for 100% acceptance.
+- **Google Merchant Feed** — XML feed with full Google Product Data Specification compliance including `<g:shipping>` block. All products auto-categorized as `Vehicles & Parts > Vehicles > Golf Carts` (category 3101).
 - **Google Merchant API** — Direct API integration to push products to Google Merchant Center. OAuth2 service account auth, data source creation, bulk sync, and scheduled auto-sync via WP-Cron.
-- **Google Merchant Reviews Feed** — XML feed compliant with Google Merchant Reviews schema v5.0, pulls WooCommerce product reviews.
+- **Google Merchant Reviews Feed** — XML feed compliant with Google Merchant Reviews schema v5.0, pulls WooCommerce product reviews with 1-5 star ratings.
 - **Facebook / Meta Feed** — CSV feed for Meta Commerce Manager product catalog.
 - **Amazon Feed** — Tab-delimited feed for Amazon Seller Central bulk upload.
 - **eBay Feed** — CSV feed for eBay File Exchange / Seller Hub.
 - **Walmart Feed** — XML feed for Walmart Marketplace bulk upload.
 - **TikTok Shop Feed** — CSV feed for TikTok Shop product upload.
 - **Unlimited Custom Feeds** — Create as many additional feeds as you need (CSV, XML, or TSV) with configurable column mapping.
-- **Multi-Store Support** — Assign products to stores/locations and sync to Google per-store.
-- **Secure Feed URLs** — Each feed URL is protected with a secret key.
+- **Location-Based Sync** — Products use the existing `location` taxonomy (States > Cities). Sync to Google filtered by any location.
+- **Secure Feed URLs** — Each feed URL is protected with a secret key. Dual-routing (rewrite rules + `parse_request` fallback) ensures feeds always resolve.
 - **Full Field Mapping** — Override any WooCommerce product field with custom meta keys for 100% mapping accuracy.
 - **Variable Product Support** — Automatically expands variable products into individual variations with item group IDs.
-- **TIGON Branded Admin** — Clean dashboard with TIGON brand colors and tiger/database logo header.
+- **TIGON Branded Admin** — Full-width dark maroon header with TIGON tiger/database/network SVG logo on every admin page. Custom sidebar menu icon.
 
 ## Requirements
 
@@ -33,9 +33,21 @@ Generate and serve product feed URLs for Google Merchant Center, eBay, Amazon, W
 
 1. Upload the `tigon-merchant-feeds` folder to `/wp-content/plugins/`.
 2. Activate the plugin through the WordPress **Plugins** menu.
-3. Navigate to **TIGON Feeds** in the admin sidebar.
-4. Enable the feeds you need and copy the feed URLs.
-5. Submit each URL to the corresponding marketplace platform.
+3. Go to **Settings > Permalinks** and click **Save Changes** (flushes rewrite rules).
+4. Navigate to **TIGON Feeds** in the admin sidebar.
+5. Enable the feeds you need and copy the feed URLs.
+6. Submit each URL to the corresponding marketplace platform.
+
+## Admin Pages
+
+| Page | Path | Purpose |
+|------|------|---------|
+| Dashboard | `admin.php?page=tigon-merchant-feeds` | Feed URLs, product/feed counts, quick links |
+| Feed Settings | `admin.php?page=tigon-feed-settings` | Enable/disable feeds, Google category, shipping defaults, security key |
+| Field Mapping | `admin.php?page=tigon-field-mapping` | Override WooCommerce fields with custom meta keys |
+| Custom Feeds | `admin.php?page=tigon-custom-feeds` | Create additional marketplace feeds (CSV/XML/TSV) |
+| Google API | `admin.php?page=tigon-google-api` | Merchant API credentials, data source, sync schedule, manual sync |
+| Locations | `admin.php?page=tigon-stores` | View products by location taxonomy (States > Cities), link to taxonomy editor |
 
 ## Feed URLs
 
@@ -52,6 +64,16 @@ https://yoursite.com/tigon-feed/tiktok/?key=YOUR_SECRET_KEY
 https://yoursite.com/tigon-feed/{custom-slug}/?key=YOUR_SECRET_KEY
 ```
 
+### Feed URL Troubleshooting
+
+If Google Merchant Center reports "File not found" when fetching your feed:
+
+1. **Flush rewrite rules** — Go to **Settings > Permalinks** in WordPress admin and click **Save Changes**.
+2. **Update the plugin** — The plugin auto-flushes rewrite rules once per version update. Deactivate and reactivate if needed.
+3. **Check your CDN** — Ensure `/tigon-feed/(.*)` is excluded from caching (see CDN section below).
+4. **Test the URL directly** — Open the feed URL in your browser. You should see XML output, not a WordPress 404 page.
+5. **Fallback routing** — The plugin uses a `parse_request` fallback that catches `/tigon-feed/` URLs even when rewrite rules are missing. If the URL still 404s, check that the plugin is activated and WooCommerce is running.
+
 ## Google Merchant API Setup
 
 1. Go to **TIGON Feeds > Google API** in the WordPress admin.
@@ -64,6 +86,59 @@ https://yoursite.com/tigon-feed/{custom-slug}/?key=YOUR_SECRET_KEY
 5. Click **Create API Data Source** to create a data source named for this plugin.
 6. Set a sync schedule (every 6 hours, 12 hours, daily, or twice daily).
 7. Click **Sync Now** to push all products immediately.
+
+### API Data Flow
+
+```
+WooCommerce Products
+        |
+   TMF_Field_Mapper::map()
+        |
+   TMF_Google_Merchant_API::insert_product()
+        |
+   POST merchantapi.googleapis.com/products/v1/accounts/{id}/productInputs:insert
+        |
+   Google Merchant Center
+```
+
+Each product is mapped to Google's format with:
+- Prices in `amountMicros` (e.g., $15.99 = 15990000)
+- Availability as API enums (`IN_STOCK`, `OUT_OF_STOCK`, `BACKORDER`)
+- GTIN, MPN, brand, condition, shipping weight/dimensions
+- Product highlights, structured details, custom labels
+- Location taxonomy terms as custom attributes
+
+## Location Taxonomy
+
+Products are organized by the existing **Location** taxonomy (hierarchical: States > Cities). This is used for:
+
+- **Google API sync filtering** — Push products from a specific state or city only
+- **Locations admin page** — View product counts per location
+- **Product custom attributes** — Location terms are sent to Google as custom attributes
+
+Locations are managed via the standard WordPress taxonomy editor at **Products > Location** (or the link on the Locations page).
+
+Example hierarchy:
+```
+Florida
+  ├── Lecanto
+Pennsylvania
+  ├── Hatfield
+  ├── Long Pond
+  ├── Pocono
+  ├── Scranton
+  └── Philadelphia
+New Jersey
+  ├── Bayville
+  ├── Ocean View
+  ├── Pleasantville
+  ├── Rio Grande
+  └── Waretown
+Virginia
+  ├── Gloucester Point
+  ├── Portsmouth
+  └── Virginia Beach
+```
 
 ---
 
@@ -86,7 +161,7 @@ Add these URL patterns to your CDN or caching plugin's **"Never Cache URLs"** li
 | Pattern | Purpose |
 |---------|---------|
 | `/tigon-feed/(.*)` | All product feed endpoints (Google, Facebook, Amazon, eBay, Walmart, TikTok, custom feeds, reviews). These must return real-time product data. |
-| `/wp-admin/admin.php?page=tigon(.*)` | Plugin admin pages (dashboard, settings, Google API, stores). Prevents stale form data and CSRF token issues. |
+| `/wp-admin/admin.php?page=tigon(.*)` | Plugin admin pages (dashboard, settings, Google API, locations). Prevents stale form data and CSRF token issues. |
 | `/wp-json/tmf/(.*)` | Any REST API endpoints the plugin registers. |
 
 ### Never Cache Cookies
@@ -183,11 +258,41 @@ After configuring, test that feeds are not cached:
 
 1. Visit any feed URL in your browser (e.g., `https://yoursite.com/tigon-feed/google/?key=YOUR_KEY`).
 2. Check the response headers:
-   - `Cache-Control` should show `no-cache, must-revalidate`
+   - `Cache-Control` should show `no-cache, no-store, must-revalidate`
    - `X-Cache` (if present) should show `MISS` or `BYPASS`, not `HIT`
    - `X-Robots-Tag` should show `noindex, nofollow`
 3. Update a product's price in WooCommerce, then reload the feed — the new price should appear immediately.
 4. If the price is stale, your cache is still serving the feed. Double-check the exclusion rules above.
+
+---
+
+## File Structure
+
+```
+tigon-merchant-feeds/
+├── tigon-merchant-feeds.php          # Main plugin file, loader, activation/deactivation
+├── uninstall.php                     # Cleanup on plugin deletion
+├── README.md
+├── admin/
+│   ├── class-admin.php               # All admin pages (dashboard, settings, mapping, feeds, API, locations)
+│   ├── css/admin.css                 # Admin styles (TIGON branding, cards, tables, buttons)
+│   ├── js/admin.js                   # Admin JS (copy-to-clipboard, etc.)
+│   └── img/tigon-logo.svg            # TIGON tiger+database+network SVG logo
+└── includes/
+    ├── class-field-mapper.php         # Maps WooCommerce product data to feed fields
+    ├── class-feed-generator.php       # Abstract base class for feed generators
+    ├── class-feed-endpoint.php        # URL routing (rewrite rules + parse_request fallback)
+    ├── class-google-feed.php          # Google Merchant XML feed
+    ├── class-google-reviews-feed.php  # Google Merchant Reviews XML feed
+    ├── class-google-merchant-api.php  # Google Merchant API (OAuth, sync, data sources, locations)
+    ├── class-facebook-feed.php        # Facebook/Meta CSV feed
+    ├── class-amazon-feed.php          # Amazon TSV feed
+    ├── class-ebay-feed.php            # eBay CSV feed
+    ├── class-walmart-feed.php         # Walmart XML feed
+    ├── class-tiktok-feed.php          # TikTok Shop CSV feed
+    ├── class-custom-feed.php          # User-defined custom feeds
+    └── class-tigon-merchant-feeds.php # Feed registry / helper
+```
 
 ---
 
