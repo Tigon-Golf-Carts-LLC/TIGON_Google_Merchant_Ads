@@ -1,66 +1,192 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Tiger Head -->
-  <!-- Outer face shape -->
-  <path d="M32 100c0-30 8-52 20-64s28-16 40-14c6 1 10 4 14 4s8-3 14-4c12-2 28 2 40 14s20 34 20 64c0 24-6 42-16 54s-24 20-38 22h-40c-14-2-28-10-38-22S32 124 32 100z" stroke-width="2.2"/>
-  <!-- Ears -->
-  <path d="M42 52c-6-14-4-28 2-36s14-10 20-6" stroke-width="2"/>
-  <path d="M158 52c6-14 4-28-2-36s-14-10-20-6" stroke-width="2"/>
-  <!-- Inner ear -->
-  <path d="M48 48c-4-10-2-20 2-26" stroke-width="1.5"/>
-  <path d="M152 48c4-10 2-20-2-26" stroke-width="1.5"/>
-  <!-- Forehead stripes -->
-  <path d="M80 40c4-8 12-14 20-14s16 6 20 14" stroke-width="1.5"/>
-  <path d="M86 50c3-6 8-10 14-10s11 4 14 10" stroke-width="1.5"/>
-  <!-- Eyes -->
-  <ellipse cx="72" cy="78" rx="10" ry="7" stroke-width="2"/>
-  <ellipse cx="128" cy="78" rx="10" ry="7" stroke-width="2"/>
-  <circle cx="72" cy="78" r="3" fill="#fff" stroke="none"/>
-  <circle cx="128" cy="78" r="3" fill="#fff" stroke="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+  <!-- ============================================================
+       TIGER HEAD — outer contour (double-line effect)
+       ============================================================ -->
+
+  <!-- Outer outline -->
+  <path d="M60 230
+           C60 170 72 120 95 88
+           C118 56 150 40 178 34
+           C192 31 204 38 216 42
+           C222 44 228 36 240 34
+           C260 30 286 38 310 58
+           C330 74 342 100 348 130
+           C355 160 358 196 355 230
+           C352 268 340 300 320 324
+           C300 348 274 362 248 366
+           L168 366
+           C142 362 116 348 96 324
+           C76 300 64 268 60 230Z"
+        stroke-width="3"/>
+
+  <!-- Inner outline (parallel double-line) -->
+  <path d="M72 230
+           C72 174 82 128 103 98
+           C124 68 152 52 178 46
+           C190 44 200 50 212 53
+           C220 55 226 48 238 46
+           C256 42 280 50 302 66
+           C320 80 332 106 338 134
+           C344 162 346 194 344 228
+           C342 262 330 292 312 314
+           C294 336 270 350 248 354
+           L168 354
+           C146 350 122 336 104 314
+           C86 292 74 262 72 230Z"
+        stroke-width="2"/>
+
+  <!-- ============================================================
+       EARS
+       ============================================================ -->
+
+  <!-- Left ear outer -->
+  <path d="M100 100 C88 68 86 40 96 22 C106 8 122 6 138 18" stroke-width="2.5"/>
+  <!-- Left ear inner -->
+  <path d="M108 92 C100 68 98 48 106 34 C112 24 122 22 130 28" stroke-width="1.8"/>
+
+  <!-- Right ear outer -->
+  <path d="M316 100 C328 68 330 40 320 22 C310 8 294 6 278 18" stroke-width="2.5"/>
+  <!-- Right ear inner -->
+  <path d="M308 92 C316 68 318 48 310 34 C304 24 294 22 286 28" stroke-width="1.8"/>
+
+  <!-- ============================================================
+       FOREHEAD STRIPES
+       ============================================================ -->
+
+  <path d="M168 72 C180 56 196 46 210 46 C224 46 240 56 248 72" stroke-width="1.8"/>
+  <path d="M178 86 C188 72 198 64 210 64 C222 64 232 72 240 86" stroke-width="1.8"/>
+  <path d="M186 98 C194 88 202 82 210 82 C218 82 226 88 232 98" stroke-width="1.5"/>
+
+  <!-- ============================================================
+       EYES
+       ============================================================ -->
+
+  <!-- Left eye -->
+  <ellipse cx="162" cy="168" rx="22" ry="14" stroke-width="2.5"/>
+  <ellipse cx="162" cy="168" rx="8" ry="8" fill="#ffffff" stroke="none"/>
+
+  <!-- Right eye -->
+  <ellipse cx="258" cy="168" rx="22" ry="14" stroke-width="2.5"/>
+  <ellipse cx="258" cy="168" rx="8" ry="8" fill="#ffffff" stroke="none"/>
+
+  <!-- ============================================================
+       NOSE BRIDGE & NOSE
+       ============================================================ -->
+
+  <!-- Nose bridge lines -->
+  <path d="M196 152 L206 200" stroke-width="1.5"/>
+  <path d="M222 152 L214 200" stroke-width="1.5"/>
+
   <!-- Nose -->
-  <path d="M92 100c2-4 6-7 8-7s6 3 8 7c-3 3-6 4-8 4s-5-1-8-4z" stroke-width="2"/>
-  <!-- Mouth -->
-  <path d="M100 107v8" stroke-width="1.5"/>
-  <path d="M90 118c4 4 14 4 20 0" stroke-width="1.8"/>
-  <!-- Whisker dots -->
-  <circle cx="64" cy="104" r="1.5" fill="#fff" stroke="none"/>
-  <circle cx="56" cy="100" r="1.5" fill="#fff" stroke="none"/>
-  <circle cx="58" cy="108" r="1.5" fill="#fff" stroke="none"/>
-  <circle cx="136" cy="104" r="1.5" fill="#fff" stroke="none"/>
-  <circle cx="144" cy="100" r="1.5" fill="#fff" stroke="none"/>
-  <circle cx="142" cy="108" r="1.5" fill="#fff" stroke="none"/>
-  <!-- Cheek stripes -->
-  <path d="M40 78c6 2 12 6 16 12" stroke-width="1.5"/>
-  <path d="M36 88c8 2 14 8 18 14" stroke-width="1.5"/>
-  <path d="M38 98c6 2 12 8 16 14" stroke-width="1.5"/>
-  <path d="M160 78c-6 2-12 6-16 12" stroke-width="1.5"/>
-  <path d="M164 88c-8 2-14 8-18 14" stroke-width="1.5"/>
-  <path d="M162 98c-6 2-12 8-16 14" stroke-width="1.5"/>
-  <!-- Chin / jaw -->
-  <path d="M70 130c8 6 24 8 32 8h-4c8 0 24-2 32-8" stroke-width="1.8"/>
+  <path d="M196 210
+           C200 198 206 192 210 192
+           C214 192 220 198 224 210
+           C218 218 214 222 210 222
+           C206 222 202 218 196 210Z"
+        stroke-width="2.2"/>
 
-  <!-- Database cylinder (right of tiger) -->
-  <ellipse cx="162" cy="140" rx="16" ry="6" stroke-width="1.8"/>
-  <path d="M146 140v24" stroke-width="1.8"/>
-  <path d="M178 140v24" stroke-width="1.8"/>
-  <ellipse cx="162" cy="164" rx="16" ry="6" stroke-width="1.8"/>
-  <path d="M146 148c0 3.3 7.2 6 16 6s16-2.7 16-6" stroke-width="1.2"/>
-  <path d="M146 156c0 3.3 7.2 6 16 6s16-2.7 16-6" stroke-width="1.2"/>
+  <!-- ============================================================
+       MOUTH & MUZZLE
+       ============================================================ -->
 
-  <!-- Network nodes and connections -->
-  <!-- Main connector from DB -->
-  <line x1="162" y1="170" x2="162" y2="180" stroke-width="1.5"/>
-  <!-- Branch lines -->
-  <line x1="162" y1="180" x2="140" y2="192" stroke-width="1.5"/>
-  <line x1="162" y1="180" x2="162" y2="194" stroke-width="1.5"/>
-  <line x1="162" y1="180" x2="184" y2="192" stroke-width="1.5"/>
-  <!-- Node squares -->
-  <rect x="134" y="189" width="10" height="10" rx="1.5" stroke-width="1.5"/>
-  <rect x="157" y="191" width="10" height="10" rx="1.5" stroke-width="1.5"/>
-  <rect x="179" y="189" width="10" height="10" rx="1.5" stroke-width="1.5"/>
+  <path d="M210 222 L210 240" stroke-width="1.8"/>
+  <path d="M190 252 C198 262 222 262 230 252" stroke-width="2"/>
 
-  <!-- Secondary branch from left node -->
-  <line x1="130" y1="170" x2="120" y2="182" stroke-width="1.2"/>
-  <line x1="130" y1="170" x2="140" y2="182" stroke-width="1.2"/>
-  <rect x="114" y="180" width="8" height="8" rx="1.5" stroke-width="1.2"/>
-  <rect x="137" y="180" width="8" height="8" rx="1.5" stroke-width="1.2"/>
+  <!-- Whisker dots - left -->
+  <circle cx="144" cy="220" r="3" fill="#ffffff" stroke="none"/>
+  <circle cx="132" cy="212" r="3" fill="#ffffff" stroke="none"/>
+  <circle cx="128" cy="226" r="3" fill="#ffffff" stroke="none"/>
+
+  <!-- Whisker dots - right -->
+  <circle cx="276" cy="220" r="3" fill="#ffffff" stroke="none"/>
+  <circle cx="288" cy="212" r="3" fill="#ffffff" stroke="none"/>
+  <circle cx="292" cy="226" r="3" fill="#ffffff" stroke="none"/>
+
+  <!-- ============================================================
+       CHEEK / FACE STRIPES
+       ============================================================ -->
+
+  <!-- Left cheek stripes -->
+  <path d="M80 158 C96 164 112 178 122 192" stroke-width="1.8"/>
+  <path d="M72 178 C90 184 108 200 118 216" stroke-width="1.8"/>
+  <path d="M68 200 C86 206 104 222 114 238" stroke-width="1.8"/>
+
+  <!-- Right cheek stripes -->
+  <path d="M336 158 C320 164 304 178 294 192" stroke-width="1.8"/>
+  <path d="M344 178 C326 184 308 200 298 216" stroke-width="1.8"/>
+  <path d="M348 200 C330 206 312 222 302 238" stroke-width="1.8"/>
+
+  <!-- ============================================================
+       CHIN / JAW
+       ============================================================ -->
+
+  <path d="M146 298 C166 312 194 320 210 320 C226 320 254 312 274 298" stroke-width="2"/>
+  <path d="M156 284 C174 296 196 302 210 302 C224 302 246 296 264 284" stroke-width="1.8"/>
+
+  <!-- ============================================================
+       DATABASE CYLINDER (overlapping upper-right of tiger)
+       ============================================================ -->
+
+  <!-- Top ellipse -->
+  <ellipse cx="380" cy="218" rx="50" ry="18" stroke-width="2.5"/>
+
+  <!-- Cylinder sides -->
+  <line x1="330" y1="218" x2="330" y2="298" stroke-width="2.5"/>
+  <line x1="430" y1="218" x2="430" y2="298" stroke-width="2.5"/>
+
+  <!-- Bottom ellipse -->
+  <ellipse cx="380" cy="298" rx="50" ry="18" stroke-width="2.5"/>
+
+  <!-- Internal disc lines -->
+  <path d="M330 244 C330 254 352 262 380 262 C408 262 430 254 430 244" stroke-width="1.8"/>
+  <path d="M330 270 C330 280 352 288 380 288 C408 288 430 280 430 270" stroke-width="1.8"/>
+
+  <!-- ============================================================
+       NETWORK HIERARCHY — connecting lines and nodes
+       ============================================================ -->
+
+  <!-- Main vertical connector from DB bottom -->
+  <line x1="380" y1="316" x2="380" y2="340" stroke-width="2"/>
+
+  <!-- Large connector node (hub) -->
+  <rect x="290" y="340" width="60" height="36" rx="5" stroke-width="2.2"/>
+
+  <!-- Horizontal bar from hub to right -->
+  <line x1="350" y1="358" x2="420" y2="358" stroke-width="2"/>
+  <rect x="420" y="340" width="60" height="36" rx="5" stroke-width="2.2"/>
+
+  <!-- Left branch from hub down -->
+  <line x1="310" y1="376" x2="310" y2="406" stroke-width="2"/>
+  <line x1="310" y1="406" x2="260" y2="406" stroke-width="2"/>
+  <line x1="310" y1="406" x2="360" y2="406" stroke-width="2"/>
+
+  <!-- Left branch nodes (medium) -->
+  <rect x="236" y="396" width="30" height="22" rx="3" stroke-width="2"/>
+  <rect x="348" y="396" width="30" height="22" rx="3" stroke-width="2"/>
+
+  <!-- Right branch from right hub down -->
+  <line x1="450" y1="376" x2="450" y2="406" stroke-width="2"/>
+  <rect x="434" y="396" width="30" height="22" rx="3" stroke-width="2"/>
+
+  <!-- Deeper level — lines down from medium nodes -->
+  <line x1="251" y1="418" x2="251" y2="444" stroke-width="1.8"/>
+  <line x1="251" y1="444" x2="224" y2="444" stroke-width="1.8"/>
+  <line x1="251" y1="444" x2="278" y2="444" stroke-width="1.8"/>
+
+  <line x1="363" y1="418" x2="363" y2="444" stroke-width="1.8"/>
+  <line x1="363" y1="444" x2="336" y2="444" stroke-width="1.8"/>
+  <line x1="363" y1="444" x2="390" y2="444" stroke-width="1.8"/>
+
+  <!-- Leaf nodes (small squares) -->
+  <rect x="212" y="438" width="18" height="18" rx="2.5" stroke-width="1.8"/>
+  <rect x="270" y="438" width="18" height="18" rx="2.5" stroke-width="1.8"/>
+
+  <rect x="324" y="438" width="18" height="18" rx="2.5" stroke-width="1.8"/>
+  <rect x="382" y="438" width="18" height="18" rx="2.5" stroke-width="1.8"/>
+
+  <!-- Bottom-right leaf from right hub branch -->
+  <line x1="449" y1="418" x2="449" y2="444" stroke-width="1.8"/>
+  <rect x="440" y="438" width="18" height="18" rx="2.5" stroke-width="1.8"/>
+
 </svg>
