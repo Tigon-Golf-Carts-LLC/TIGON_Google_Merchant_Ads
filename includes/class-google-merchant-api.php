@@ -414,12 +414,21 @@ class TMF_Google_Merchant_API {
 			);
 		}
 
-		// Store code for multi-store / local inventory.
+		// Location for multi-store / local inventory.
 		$custom_attributes = array();
 		if ( ! empty( $store_id ) ) {
 			$custom_attributes[] = array(
 				'name'  => 'store_code',
 				'value' => $store_id,
+			);
+		}
+
+		// Also include the product's actual location terms as custom attributes.
+		$location_terms = wp_get_post_terms( $product->get_id(), self::LOCATION_TAXONOMY, array( 'fields' => 'names' ) );
+		if ( ! is_wp_error( $location_terms ) && ! empty( $location_terms ) ) {
+			$custom_attributes[] = array(
+				'name'  => 'location',
+				'value' => implode( ', ', $location_terms ),
 			);
 		}
 
@@ -536,12 +545,13 @@ class TMF_Google_Merchant_API {
 			'type'   => array( 'simple', 'variable', 'variation', 'external' ),
 		);
 
-		// Filter by store if provided.
+		// Filter by location taxonomy term if provided.
 		if ( ! empty( $store_id ) ) {
-			$args['meta_query'] = array(
+			$args['tax_query'] = array(
 				array(
-					'key'   => '_tmf_store',
-					'value' => $store_id,
+					'taxonomy' => self::LOCATION_TAXONOMY,
+					'field'    => 'slug',
+					'terms'    => $store_id,
 				),
 			);
 		}
@@ -628,67 +638,128 @@ class TMF_Google_Merchant_API {
 	}
 
 	// =========================================================================
-	//  Store Management
+	//  Location / Store Management (uses existing "location" taxonomy)
 	// =========================================================================
 
 	/**
-	 * Get configured stores.
+	 * Get the location taxonomy name used on products.
+	 */
+	const LOCATION_TAXONOMY = 'location';
+
+	/**
+	 * Get all location terms (states and cities) as a flat list.
 	 *
-	 * @return array Array of store_id => store_name.
+	 * @return array Array of slug => name.
 	 */
 	public static function get_stores() {
-		return get_option( 'tmf_stores', array() );
+		$terms = get_terms( array(
+			'taxonomy'   => self::LOCATION_TAXONOMY,
+			'hide_empty' => false,
+		) );
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array();
+		}
+
+		$stores = array();
+		foreach ( $terms as $term ) {
+			$stores[ $term->slug ] = $term->name;
+		}
+		return $stores;
 	}
 
 	/**
-	 * Get products grouped by store.
+	 * Get top-level location terms (states) with their children (cities).
 	 *
-	 * @return array Associative array of store_id => product count.
+	 * @return array Hierarchical array of state terms with child cities.
 	 */
-	public static function get_products_by_store() {
-		$stores  = self::get_stores();
-		$grouped = array();
+	public static function get_locations_hierarchical() {
+		$states = get_terms( array(
+			'taxonomy'   => self::LOCATION_TAXONOMY,
+			'hide_empty' => false,
+			'parent'     => 0,
+			'orderby'    => 'name',
+		) );
 
-		foreach ( $stores as $store_id => $store_name ) {
-			$products = wc_get_products( array(
-				'status'     => 'publish',
-				'limit'      => -1,
-				'return'     => 'ids',
-				'meta_query' => array(
-					array(
-						'key'   => '_tmf_store',
-						'value' => $store_id,
-					),
-				),
+		if ( is_wp_error( $states ) || empty( $states ) ) {
+			return array();
+		}
+
+		$hierarchy = array();
+		foreach ( $states as $state ) {
+			$cities = get_terms( array(
+				'taxonomy'   => self::LOCATION_TAXONOMY,
+				'hide_empty' => false,
+				'parent'     => $state->term_id,
+				'orderby'    => 'name',
 			) );
-			$grouped[ $store_id ] = array(
-				'name'  => $store_name,
-				'count' => count( $products ),
+
+			$hierarchy[] = array(
+				'term'     => $state,
+				'children' => is_wp_error( $cities ) ? array() : $cities,
 			);
 		}
 
-		// Count unassigned products.
-		$all_product_ids = wc_get_products( array(
-			'status' => 'publish',
-			'limit'  => -1,
-			'return' => 'ids',
+		return $hierarchy;
+	}
+
+	/**
+	 * Get products grouped by location taxonomy term.
+	 *
+	 * @return array Associative array of slug => { name, count }.
+	 */
+	public static function get_products_by_store() {
+		$terms = get_terms( array(
+			'taxonomy'   => self::LOCATION_TAXONOMY,
+			'hide_empty' => true,
+			'orderby'    => 'count',
+			'order'      => 'DESC',
 		) );
-		$assigned = wc_get_products( array(
-			'status'     => 'publish',
-			'limit'      => -1,
-			'return'     => 'ids',
-			'meta_query' => array(
-				array(
-					'key'     => '_tmf_store',
-					'compare' => 'EXISTS',
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array();
+		}
+
+		$grouped = array();
+		foreach ( $terms as $term ) {
+			$grouped[ $term->slug ] = array(
+				'name'    => $term->name,
+				'count'   => $term->count,
+				'term_id' => $term->term_id,
+				'parent'  => $term->parent,
+			);
+		}
+
+		// Count products with no location assigned.
+		$total = wp_count_posts( 'product' );
+		$total_published = isset( $total->publish ) ? (int) $total->publish : 0;
+
+		$assigned_count = 0;
+		$counted_ids    = array();
+		foreach ( $terms as $term ) {
+			$product_ids = get_posts( array(
+				'post_type'   => 'product',
+				'post_status' => 'publish',
+				'numberposts' => -1,
+				'fields'      => 'ids',
+				'tax_query'   => array(
+					array(
+						'taxonomy' => self::LOCATION_TAXONOMY,
+						'terms'    => $term->term_id,
+					),
 				),
-			),
-		) );
-		$unassigned = count( $all_product_ids ) - count( $assigned );
+			) );
+			foreach ( $product_ids as $pid ) {
+				$counted_ids[ $pid ] = true;
+			}
+		}
+		$unassigned = $total_published - count( $counted_ids );
 		if ( $unassigned > 0 ) {
 			$grouped['_unassigned'] = array(
-				'name'  => 'Unassigned',
-				'count' => $unassigned,
+				'name'    => 'No Location',
+				'count'   => $unassigned,
+				'term_id' => 0,
+				'parent'  => 0,
 			);
 		}
 

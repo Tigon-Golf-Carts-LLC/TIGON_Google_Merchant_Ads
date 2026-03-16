@@ -81,8 +81,8 @@ class TMF_Admin {
 
 		add_submenu_page(
 			'tigon-merchant-feeds',
-			'Stores',
-			'Stores',
+			'Locations',
+			'Locations',
 			'manage_woocommerce',
 			'tigon-stores',
 			array( __CLASS__, 'page_stores' )
@@ -278,37 +278,6 @@ class TMF_Admin {
 			}
 		}
 
-		// --- Save stores -------------------------------------------------------
-		if ( isset( $_POST['tmf_save_stores'] ) && check_admin_referer( 'tmf_stores_nonce' ) ) {
-			$store_ids   = isset( $_POST['tmf_store_id'] ) ? (array) $_POST['tmf_store_id'] : array();
-			$store_names = isset( $_POST['tmf_store_name'] ) ? (array) $_POST['tmf_store_name'] : array();
-			$stores      = array();
-			foreach ( $store_ids as $idx => $sid ) {
-				$sid   = sanitize_key( $sid );
-				$sname = sanitize_text_field( wp_unslash( $store_names[ $idx ] ?? '' ) );
-				if ( ! empty( $sid ) && ! empty( $sname ) ) {
-					$stores[ $sid ] = $sname;
-				}
-			}
-			update_option( 'tmf_stores', $stores );
-			add_action( 'admin_notices', function () {
-				echo '<div class="notice notice-success is-dismissible"><p>Stores saved.</p></div>';
-			} );
-		}
-
-		// --- Add store ---------------------------------------------------------
-		if ( isset( $_POST['tmf_add_store'] ) && check_admin_referer( 'tmf_stores_nonce' ) ) {
-			$sid   = sanitize_key( wp_unslash( $_POST['tmf_new_store_id'] ?? '' ) );
-			$sname = sanitize_text_field( wp_unslash( $_POST['tmf_new_store_name'] ?? '' ) );
-			if ( ! empty( $sid ) && ! empty( $sname ) ) {
-				$stores = get_option( 'tmf_stores', array() );
-				$stores[ $sid ] = $sname;
-				update_option( 'tmf_stores', $stores );
-				add_action( 'admin_notices', function () {
-					echo '<div class="notice notice-success is-dismissible"><p>Store added.</p></div>';
-				} );
-			}
-		}
 	}
 
 	// =========================================================================
@@ -382,7 +351,7 @@ class TMF_Admin {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-field-mapping' ) ); ?>" class="button tmf-btn-secondary">Field Mapping</a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-custom-feeds' ) ); ?>" class="button tmf-btn-secondary">Custom Feeds</a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-google-api' ) ); ?>" class="button tmf-btn-secondary">Google API</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-stores' ) ); ?>" class="button tmf-btn-secondary">Stores</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tigon-stores' ) ); ?>" class="button tmf-btn-secondary">Locations</a>
 			</div>
 		</div></div>
 		<?php
@@ -795,12 +764,19 @@ class TMF_Admin {
 					<p>Push all products to Google Merchant Center now.</p>
 					<table class="form-table">
 						<tr>
-							<th>Filter by Store</th>
+							<th>Filter by Location</th>
 							<td>
 								<select name="tmf_sync_store">
-									<option value="">All Stores</option>
-									<?php foreach ( $stores as $sid => $sname ) : ?>
-										<option value="<?php echo esc_attr( $sid ); ?>"><?php echo esc_html( $sname ); ?></option>
+									<option value="">All Locations</option>
+									<?php
+									$locations_hier = TMF_Google_Merchant_API::get_locations_hierarchical();
+									foreach ( $locations_hier as $group ) :
+										$state = $group['term'];
+									?>
+										<option value="<?php echo esc_attr( $state->slug ); ?>"><?php echo esc_html( $state->name ); ?></option>
+										<?php foreach ( $group['children'] as $city ) : ?>
+											<option value="<?php echo esc_attr( $city->slug ); ?>">&nbsp;&nbsp;&mdash; <?php echo esc_html( $city->name ); ?></option>
+										<?php endforeach; ?>
 									<?php endforeach; ?>
 								</select>
 							</td>
@@ -838,78 +814,86 @@ class TMF_Admin {
 	//  Stores page
 	// =========================================================================
 	public static function page_stores() {
-		$stores = get_option( 'tmf_stores', array() );
+		$locations  = TMF_Google_Merchant_API::get_locations_hierarchical();
+		$by_store   = TMF_Google_Merchant_API::get_products_by_store();
+		$taxonomy   = TMF_Google_Merchant_API::LOCATION_TAXONOMY;
+		$edit_url   = admin_url( 'edit-tags.php?taxonomy=' . $taxonomy . '&post_type=product' );
 		?>
 		<div class="wrap">
-			<?php self::render_header( 'Store Management', 'Manage stores/locations for product sorting and per-store Google syncing.' ); ?>
+			<?php self::render_header( 'Locations', 'Products by location for per-location Google syncing.' ); ?>
 			<div class="tmf-wrap">
 
-			<form method="post">
-				<?php wp_nonce_field( 'tmf_stores_nonce' ); ?>
+			<div class="tmf-card">
+				<h2>Product Locations</h2>
+				<p>Locations are managed via the <strong><a href="<?php echo esc_url( $edit_url ); ?>">Location taxonomy</a></strong> on your products. Use the Google API sync to push products filtered by any location below.</p>
 
-				<?php if ( ! empty( $stores ) ) : ?>
-				<div class="tmf-card">
-					<h2>Your Stores</h2>
-					<p>Products can be assigned to stores via the <code>_tmf_store</code> custom field on each product.</p>
-					<table class="widefat tmf-feed-table">
-						<thead>
+				<?php if ( ! empty( $locations ) ) : ?>
+				<table class="widefat tmf-feed-table">
+					<thead>
+						<tr>
+							<th>State</th>
+							<th>City</th>
+							<th>Slug</th>
+							<th>Products</th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php foreach ( $locations as $group ) :
+						$state = $group['term'];
+						$cities = $group['children'];
+						$state_count = isset( $by_store[ $state->slug ] ) ? $by_store[ $state->slug ]['count'] : 0;
+					?>
+						<?php if ( ! empty( $cities ) ) : ?>
+							<?php foreach ( $cities as $idx => $city ) :
+								$city_count = isset( $by_store[ $city->slug ] ) ? $by_store[ $city->slug ]['count'] : 0;
+								if ( 0 === $city_count && 0 === $state_count && 0 === $idx ) {
+									// Skip states with no products at all
+								}
+							?>
+								<tr>
+									<?php if ( 0 === $idx ) : ?>
+										<td rowspan="<?php echo count( $cities ); ?>" style="vertical-align:top; font-weight:600; border-right:2px solid #af1f31;">
+											<?php echo esc_html( $state->name ); ?>
+											<?php if ( $state_count > 0 ) : ?>
+												<br><small style="font-weight:normal; color:#666;"><?php echo esc_html( $state_count ); ?> at state level</small>
+											<?php endif; ?>
+										</td>
+									<?php endif; ?>
+									<td><?php echo esc_html( $city->name ); ?></td>
+									<td><code><?php echo esc_html( $city->slug ); ?></code></td>
+									<td><?php echo esc_html( $city_count ); ?></td>
+								</tr>
+							<?php endforeach; ?>
+						<?php else : ?>
 							<tr>
-								<th>Store ID</th>
-								<th>Store Name</th>
-								<th>Products</th>
-							</tr>
-						</thead>
-						<tbody>
-						<?php
-						$by_store = TMF_Google_Merchant_API::get_products_by_store();
-						foreach ( $stores as $sid => $sname ) :
-							$count = isset( $by_store[ $sid ] ) ? $by_store[ $sid ]['count'] : 0;
-						?>
-							<tr>
-								<td>
-									<input type="text" name="tmf_store_id[]" value="<?php echo esc_attr( $sid ); ?>" class="regular-text">
-								</td>
-								<td>
-									<input type="text" name="tmf_store_name[]" value="<?php echo esc_attr( $sname ); ?>" class="regular-text">
-								</td>
-								<td><?php echo esc_html( $count ); ?></td>
-							</tr>
-						<?php endforeach; ?>
-						<?php if ( isset( $by_store['_unassigned'] ) ) : ?>
-							<tr>
+								<td style="font-weight:600;"><?php echo esc_html( $state->name ); ?></td>
 								<td><em>—</em></td>
-								<td><em>Unassigned</em></td>
-								<td><?php echo esc_html( $by_store['_unassigned']['count'] ); ?></td>
+								<td><code><?php echo esc_html( $state->slug ); ?></code></td>
+								<td><?php echo esc_html( $state_count ); ?></td>
 							</tr>
 						<?php endif; ?>
-						</tbody>
-					</table>
-					<?php submit_button( 'Save Stores', 'primary tmf-btn-primary', 'tmf_save_stores' ); ?>
-				</div>
+					<?php endforeach; ?>
+					<?php if ( isset( $by_store['_unassigned'] ) ) : ?>
+						<tr style="background:#fef3f3;">
+							<td style="font-weight:600;">No Location</td>
+							<td><em>—</em></td>
+							<td><code>—</code></td>
+							<td><?php echo esc_html( $by_store['_unassigned']['count'] ); ?></td>
+						</tr>
+					<?php endif; ?>
+					</tbody>
+				</table>
+				<?php else : ?>
+					<p><em>No location terms found. <a href="<?php echo esc_url( $edit_url ); ?>">Manage locations</a></em></p>
 				<?php endif; ?>
+			</div>
 
-				<div class="tmf-card">
-					<h2>Add New Store</h2>
-					<table class="form-table">
-						<tr>
-							<th>Store ID</th>
-							<td><input type="text" name="tmf_new_store_id" class="regular-text" placeholder="e.g. store-tampa" pattern="[a-z0-9_-]+">
-							<p class="description">Lowercase, no spaces. Used as the store code for Google Merchant.</p></td>
-						</tr>
-						<tr>
-							<th>Store Name</th>
-							<td><input type="text" name="tmf_new_store_name" class="regular-text" placeholder="e.g. TIGON Tampa"></td>
-						</tr>
-					</table>
-					<?php submit_button( 'Add Store', 'secondary tmf-btn-secondary', 'tmf_add_store' ); ?>
-				</div>
+			<div class="tmf-card tmf-card-muted">
+				<h3>How Locations Work</h3>
+				<p>Products are assigned to locations using the <strong>Location</strong> taxonomy (States &gt; Cities). To assign or change a product's location, edit the product in WooCommerce and set its Location term.</p>
+				<p><a href="<?php echo esc_url( $edit_url ); ?>" class="button tmf-btn-secondary">Manage Location Terms</a></p>
+			</div>
 
-				<div class="tmf-card tmf-card-muted">
-					<h3>How to Assign Products to Stores</h3>
-					<p>Add a custom field named <code>_tmf_store</code> to any WooCommerce product with the store ID as the value. Products without a store assignment will sync under "All Stores".</p>
-					<p>You can bulk-assign stores using any WooCommerce bulk edit tool or via the product edit screen.</p>
-				</div>
-			</form>
 		</div></div>
 		<?php
 	}

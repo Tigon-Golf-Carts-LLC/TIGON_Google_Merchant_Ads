@@ -26,9 +26,6 @@ delete_option( 'tmf_google_sync_frequency' );
 delete_option( 'tmf_google_last_sync_results' );
 delete_option( 'tmf_merchant_created' );
 
-// Stores.
-delete_option( 'tmf_stores' );
-
 // Rewrite version tracker.
 delete_option( 'tmf_rewrite_version' );
 
