@@ -47,6 +47,10 @@
 .tmf-header-logo svg {
 	width: 48px;
 	height: 48px;
+	background: #fff;
+	border-radius: 6px;
+	padding: 4px;
+	box-sizing: border-box;
 }
 
 .tmf-header-text {
