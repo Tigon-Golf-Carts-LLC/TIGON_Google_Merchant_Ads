@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#7a1a1a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#9c3434" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
   <!-- Tiger Head -->
   <!-- Outer face shape -->
   <path d="M32 100c0-30 8-52 20-64s28-16 40-14c6 1 10 4 14 4s8-3 14-4c12-2 28 2 40 14s20 34 20 64c0 24-6 42-16 54s-24 20-38 22h-40c-14-2-28-10-38-22S32 124 32 100z" stroke-width="2.2"/>
@@ -14,20 +14,20 @@
   <!-- Eyes -->
   <ellipse cx="72" cy="78" rx="10" ry="7" stroke-width="2"/>
   <ellipse cx="128" cy="78" rx="10" ry="7" stroke-width="2"/>
-  <circle cx="72" cy="78" r="3" fill="#7a1a1a" stroke="none"/>
-  <circle cx="128" cy="78" r="3" fill="#7a1a1a" stroke="none"/>
+  <circle cx="72" cy="78" r="3" fill="#9c3434" stroke="none"/>
+  <circle cx="128" cy="78" r="3" fill="#9c3434" stroke="none"/>
   <!-- Nose -->
   <path d="M92 100c2-4 6-7 8-7s6 3 8 7c-3 3-6 4-8 4s-5-1-8-4z" stroke-width="2"/>
   <!-- Mouth -->
   <path d="M100 107v8" stroke-width="1.5"/>
   <path d="M90 118c4 4 14 4 20 0" stroke-width="1.8"/>
   <!-- Whisker dots -->
-  <circle cx="64" cy="104" r="1.5" fill="#7a1a1a" stroke="none"/>
-  <circle cx="56" cy="100" r="1.5" fill="#7a1a1a" stroke="none"/>
-  <circle cx="58" cy="108" r="1.5" fill="#7a1a1a" stroke="none"/>
-  <circle cx="136" cy="104" r="1.5" fill="#7a1a1a" stroke="none"/>
-  <circle cx="144" cy="100" r="1.5" fill="#7a1a1a" stroke="none"/>
-  <circle cx="142" cy="108" r="1.5" fill="#7a1a1a" stroke="none"/>
+  <circle cx="64" cy="104" r="1.5" fill="#9c3434" stroke="none"/>
+  <circle cx="56" cy="100" r="1.5" fill="#9c3434" stroke="none"/>
+  <circle cx="58" cy="108" r="1.5" fill="#9c3434" stroke="none"/>
+  <circle cx="136" cy="104" r="1.5" fill="#9c3434" stroke="none"/>
+  <circle cx="144" cy="100" r="1.5" fill="#9c3434" stroke="none"/>
+  <circle cx="142" cy="108" r="1.5" fill="#9c3434" stroke="none"/>
   <!-- Cheek stripes -->
   <path d="M40 78c6 2 12 6 16 12" stroke-width="1.5"/>
   <path d="M36 88c8 2 14 8 18 14" stroke-width="1.5"/>
