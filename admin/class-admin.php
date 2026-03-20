@@ -319,8 +319,8 @@ class TMF_Admin {
 		$secret  = get_option( 'tmf_feed_secret', '' );
 		$product_count = self::get_product_count();
 		?>
+		<?php self::render_header( 'TIGON Merchant Feeds', 'Product Feed Management for Golf Carts' ); ?>
 		<div class="wrap tmf-wrap">
-			<?php self::render_header( 'TIGON Merchant Feeds', 'Product Feed Management for Golf Carts' ); ?>
 
 			<div class="tmf-stats-row">
 				<div class="tmf-stat-card">
@@ -392,12 +392,12 @@ class TMF_Admin {
 	// =========================================================================
 	public static function page_settings() {
 		$feeds      = get_option( 'tmf_feeds', array() );
-		$google_cat = get_option( 'tmf_google_category', '3101' );
-		$google_cat_name = get_option( 'tmf_google_category_name', 'Vehicles & Parts > Vehicles > Golf Carts' );
+		$google_cat = get_option( 'tmf_google_category', '3931' );
+		$google_cat_name = get_option( 'tmf_google_category_name', 'Vehicles & Parts > Vehicles > Motor Vehicles > Golf Carts' );
 		$secret     = get_option( 'tmf_feed_secret', '' );
 		?>
+		<?php self::render_header( 'Feed Settings' ); ?>
 		<div class="wrap tmf-wrap">
-			<?php self::render_header( 'Feed Settings' ); ?>
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_settings_nonce' ); ?>
@@ -433,7 +433,7 @@ class TMF_Admin {
 
 				<div class="tmf-card">
 					<h2>Google Product Category</h2>
-					<p>All products will be submitted under this Google Product Category. Default is <code>3101</code> — Vehicles &amp; Parts &gt; Vehicles &gt; Golf Carts.</p>
+					<p>All products will be submitted under this Google Product Category. Default is <code>3931</code> — Vehicles &amp; Parts &gt; Vehicles &gt; Motor Vehicles &gt; Golf Carts.</p>
 					<table class="form-table">
 						<tr>
 							<th>Category ID</th>
@@ -510,8 +510,8 @@ class TMF_Admin {
 			'custom_label_4'            => 'Custom Label 4 (g:custom_label_4)',
 		);
 		?>
+		<?php self::render_header( 'Field Mapping', 'Override default WooCommerce field mapping with custom meta keys.' ); ?>
 		<div class="wrap tmf-wrap">
-			<?php self::render_header( 'Field Mapping', 'Override default WooCommerce field mapping with custom meta keys.' ); ?>
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_mapping_nonce' ); ?>
@@ -581,7 +581,7 @@ class TMF_Admin {
 							<tr><td><code>g:id</code></td><td>Product ID — <code>get_id()</code></td></tr>
 							<tr><td><code>g:link</code></td><td>Permalink — <code>get_permalink()</code></td></tr>
 							<tr><td><code>g:availability</code></td><td>Stock status — <code>get_stock_status()</code> → in_stock / out_of_stock / backorder</td></tr>
-							<tr><td><code>g:google_product_category</code></td><td>Feed Settings → defaults to <code>3101</code> (Golf Carts)</td></tr>
+							<tr><td><code>g:google_product_category</code></td><td>Feed Settings → defaults to <code>3931</code> (Golf Carts)</td></tr>
 							<tr><td><code>g:product_type</code></td><td>WooCommerce category hierarchy path</td></tr>
 							<tr><td><code>g:item_group_id</code></td><td>Parent product ID — <code>get_parent_id()</code> (for variations)</td></tr>
 							<tr><td><code>g:canonical_link</code></td><td>Parent permalink for variations, own permalink for simple</td></tr>
@@ -611,8 +611,8 @@ class TMF_Admin {
 	public static function page_custom_feeds() {
 		$custom = get_option( 'tmf_custom_feeds', array() );
 		?>
+		<?php self::render_header( 'Custom Feeds', 'Create unlimited additional marketplace feeds.' ); ?>
 		<div class="wrap tmf-wrap">
-			<?php self::render_header( 'Custom Feeds', 'Create unlimited additional marketplace feeds.' ); ?>
 
 			<?php if ( ! empty( $custom ) ) : ?>
 			<div class="tmf-card">
@@ -705,8 +705,8 @@ class TMF_Admin {
 			$has_creds = ! empty( $decoded['client_email'] );
 		}
 		?>
+		<?php self::render_header( 'Google Merchant API', 'Push products directly to Google Merchant Center via the Merchant API.' ); ?>
 		<div class="wrap tmf-wrap">
-			<?php self::render_header( 'Google Merchant API', 'Push products directly to Google Merchant Center via the Merchant API.' ); ?>
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_google_api_nonce' ); ?>
@@ -835,8 +835,8 @@ class TMF_Admin {
 	public static function page_stores() {
 		$stores = get_option( 'tmf_stores', array() );
 		?>
+		<?php self::render_header( 'Store Management', 'Manage stores/locations for product sorting and per-store Google syncing.' ); ?>
 		<div class="wrap tmf-wrap">
-			<?php self::render_header( 'Store Management', 'Manage stores/locations for product sorting and per-store Google syncing.' ); ?>
 
 			<form method="post">
 				<?php wp_nonce_field( 'tmf_stores_nonce' ); ?>
@@ -916,17 +916,19 @@ class TMF_Admin {
 	 * Render the branded page header with TIGON logo.
 	 */
 	private static function render_header( $title, $subtitle = '' ) {
-		$logo_url = TMF_PLUGIN_URL . 'admin/img/NEW GOLF CART (4).ico';
+		$logo_url = TMF_PLUGIN_URL . 'admin/img/NEW GOLF CART (4).png';
 		?>
 		<div class="tmf-header">
-			<div class="tmf-header-logo">
-				<img src="<?php echo esc_url( $logo_url ); ?>" alt="TIGON">
-			</div>
-			<div class="tmf-header-text">
-				<h1><?php echo esc_html( $title ); ?></h1>
-				<?php if ( $subtitle ) : ?>
-					<p class="tmf-subtitle"><?php echo esc_html( $subtitle ); ?></p>
-				<?php endif; ?>
+			<div class="tmf-header-inner">
+				<div class="tmf-header-logo">
+					<img src="<?php echo esc_url( $logo_url ); ?>" alt="TIGON">
+				</div>
+				<div class="tmf-header-text">
+					<h1><?php echo esc_html( $title ); ?></h1>
+					<?php if ( $subtitle ) : ?>
+						<p class="tmf-subtitle"><?php echo esc_html( $subtitle ); ?></p>
+					<?php endif; ?>
+				</div>
 			</div>
 		</div>
 		<?php
