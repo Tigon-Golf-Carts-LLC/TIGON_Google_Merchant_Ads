@@ -3,7 +3,7 @@
  * Google Merchant Center feed generator.
  *
  * Produces an XML feed fully compliant with the Google Product Data Specification.
- * All products default to Google category 3101 (Vehicles & Parts > Vehicles > Golf Carts).
+ * All products default to Google category 3931 (Vehicles & Parts > Vehicles > Motor Vehicles > Golf Carts).
  *
  * Google Merchant Required Fields:
  *   g:id, g:title, g:description, g:link, g:image_link,
@@ -122,7 +122,7 @@ class TMF_Google_Feed extends TMF_Feed_Generator {
 				$xml .= '  <g:additional_image_link>' . esc_url( $img ) . "</g:additional_image_link>\n";
 			}
 
-			// g:google_product_category — Google taxonomy ID (3101 = Golf Carts)
+			// g:google_product_category — Google taxonomy ID (3931 = Golf Carts)
 			$xml .= '  <g:google_product_category>' . esc_xml( $data['google_product_category'] ) . "</g:google_product_category>\n";
 
 			// g:product_type — your own category hierarchy

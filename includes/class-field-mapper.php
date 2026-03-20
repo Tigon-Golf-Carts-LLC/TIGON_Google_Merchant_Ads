@@ -182,10 +182,17 @@ class TMF_Field_Mapper {
 			$mpn = $sku;
 		}
 
-		// Brand — try meta, then taxonomy, then site name.
+		// Brand — try manufacturer/brand meta, then taxonomy.
+		// For vehicles the brand is the manufacturer, NOT the site name.
 		$brand = $product->get_meta( '_brand', true );
 		if ( empty( $brand ) ) {
 			$brand = $product->get_meta( 'brand', true );
+		}
+		if ( empty( $brand ) ) {
+			$brand = $product->get_meta( '_manufacturer', true );
+		}
+		if ( empty( $brand ) ) {
+			$brand = $product->get_meta( 'manufacturer', true );
 		}
 		if ( empty( $brand ) ) {
 			// Check for a "brand" taxonomy (used by some plugins like YITH, WooCommerce Brands).
@@ -197,8 +204,9 @@ class TMF_Field_Mapper {
 				$brand = $brand_terms[0]->name;
 			}
 		}
+		// Try "Manufacturer" or "Brand" product attributes.
 		if ( empty( $brand ) ) {
-			$brand = get_bloginfo( 'name' );
+			$brand = self::get_attribute_value( $product, array( 'manufacturer', 'brand', 'make' ) );
 		}
 
 		// =====================================================================
@@ -303,6 +311,9 @@ class TMF_Field_Mapper {
 		}
 
 		// Extract known Google attributes from the attributes array.
+		$manufacturer = '';
+		$model        = '';
+
 		foreach ( $attributes as $label => $val ) {
 			$lower = strtolower( $label );
 			if ( in_array( $lower, array( 'color', 'colour' ), true ) && empty( $color ) ) {
@@ -313,6 +324,10 @@ class TMF_Field_Mapper {
 				$material = $val;
 			} elseif ( $lower === 'pattern' && empty( $pattern ) ) {
 				$pattern = $val;
+			} elseif ( in_array( $lower, array( 'manufacturer', 'make', 'brand' ), true ) && empty( $manufacturer ) ) {
+				$manufacturer = $val;
+			} elseif ( $lower === 'model' && empty( $model ) ) {
+				$model = $val;
 			}
 		}
 
@@ -320,11 +335,26 @@ class TMF_Field_Mapper {
 		if ( empty( $color ) ) {
 			$color = $product->get_meta( '_color', true );
 		}
+		if ( empty( $color ) ) {
+			$color = $product->get_meta( 'color', true );
+		}
 		if ( empty( $size ) ) {
 			$size = $product->get_meta( '_size', true );
 		}
 		if ( empty( $material ) ) {
 			$material = $product->get_meta( '_material', true );
+		}
+		if ( empty( $manufacturer ) ) {
+			$manufacturer = $product->get_meta( '_manufacturer', true );
+		}
+		if ( empty( $manufacturer ) ) {
+			$manufacturer = $product->get_meta( 'manufacturer', true );
+		}
+		if ( empty( $model ) ) {
+			$model = $product->get_meta( '_model', true );
+		}
+		if ( empty( $model ) ) {
+			$model = $product->get_meta( 'model', true );
 		}
 
 		// =====================================================================
@@ -346,12 +376,48 @@ class TMF_Field_Mapper {
 		}
 
 		// =====================================================================
+		//  Store location
+		// =====================================================================
+		$store_location = $product->get_meta( '_tmf_store', true );
+		if ( empty( $store_location ) ) {
+			$store_location = $product->get_meta( '_store_location', true );
+		}
+		if ( empty( $store_location ) ) {
+			$store_location = $product->get_meta( 'store_location', true );
+		}
+		if ( empty( $store_location ) ) {
+			$store_location = self::get_attribute_value( $product, array( 'store location', 'store', 'location', 'dealer location' ) );
+		}
+
+		// =====================================================================
 		//  Custom labels (for Google Ads campaign segmentation)
+		//  0 = Manufacturer, 1 = Model, 2 = Store Location,
+		//  3 = Color, 4 = New or Used
 		// =====================================================================
 		$custom_labels = array();
 		for ( $i = 0; $i <= 4; $i++ ) {
 			$val = $product->get_meta( '_custom_label_' . $i, true );
 			$custom_labels[ $i ] = ! empty( $val ) ? $val : '';
+		}
+
+		// Auto-fill custom labels from product data when not manually set.
+		if ( empty( $custom_labels[0] ) && ! empty( $manufacturer ) ) {
+			$custom_labels[0] = $manufacturer;
+		}
+		if ( empty( $custom_labels[0] ) && ! empty( $brand ) ) {
+			$custom_labels[0] = $brand;
+		}
+		if ( empty( $custom_labels[1] ) && ! empty( $model ) ) {
+			$custom_labels[1] = $model;
+		}
+		if ( empty( $custom_labels[2] ) && ! empty( $store_location ) ) {
+			$custom_labels[2] = $store_location;
+		}
+		if ( empty( $custom_labels[3] ) && ! empty( $color ) ) {
+			$custom_labels[3] = $color;
+		}
+		if ( empty( $custom_labels[4] ) ) {
+			$custom_labels[4] = ucfirst( $condition );
 		}
 
 		// =====================================================================
@@ -403,8 +469,8 @@ class TMF_Field_Mapper {
 			// --- Recommended by Google ---
 			'sale_price_effective_date' => $sale_price_effective_date,
 			'additional_image_links'    => $gallery,
-			'google_product_category'   => get_option( 'tmf_google_category', '3101' ),
-			'google_product_category_name' => get_option( 'tmf_google_category_name', 'Vehicles & Parts > Vehicles > Golf Carts' ),
+			'google_product_category'   => get_option( 'tmf_google_category', '3931' ),
+			'google_product_category_name' => get_option( 'tmf_google_category_name', 'Vehicles & Parts > Vehicles > Motor Vehicles > Golf Carts' ),
 			'product_type'              => $product->get_type(),
 			'category_path'             => ! empty( $category_hierarchy ) ? $category_hierarchy : implode( ' > ', $categories ),
 			'canonical_link'            => $canonical_link,
@@ -419,6 +485,9 @@ class TMF_Field_Mapper {
 			'size'                      => $size,
 			'material'                  => $material,
 			'pattern'                   => $pattern,
+			'manufacturer'              => $manufacturer,
+			'model'                     => $model,
+			'store_location'            => $store_location,
 
 			// --- Shipping & dimensions ---
 			'weight'                    => $weight,
@@ -576,6 +645,48 @@ class TMF_Field_Mapper {
 		}
 
 		return implode( ' > ', $path_parts );
+	}
+
+	/**
+	 * Search product attributes for a value by label (case-insensitive).
+	 *
+	 * @param WC_Product $product  Product to search.
+	 * @param array      $needles  Lowercase attribute label names to match.
+	 * @return string Attribute value or empty string.
+	 */
+	private static function get_attribute_value( WC_Product $product, array $needles ) {
+		$source = $product;
+		// For variations, also check parent attributes.
+		if ( $product->is_type( 'variation' ) && $product->get_parent_id() ) {
+			$parent = wc_get_product( $product->get_parent_id() );
+			if ( $parent ) {
+				$source = $parent;
+			}
+		}
+
+		foreach ( $source->get_attributes() as $attr ) {
+			if ( ! is_a( $attr, 'WC_Product_Attribute' ) ) {
+				continue;
+			}
+			$label = strtolower( wc_attribute_label( $attr->get_name() ) );
+			if ( ! in_array( $label, $needles, true ) ) {
+				continue;
+			}
+			$options = $attr->get_options();
+			if ( $attr->is_taxonomy() ) {
+				$names = array();
+				foreach ( $options as $term_id ) {
+					$term = get_term( $term_id );
+					if ( $term && ! is_wp_error( $term ) ) {
+						$names[] = $term->name;
+					}
+				}
+				return implode( ', ', $names );
+			}
+			return implode( ', ', $options );
+		}
+
+		return '';
 	}
 
 	/**

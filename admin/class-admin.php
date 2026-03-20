@@ -392,8 +392,8 @@ class TMF_Admin {
 	// =========================================================================
 	public static function page_settings() {
 		$feeds      = get_option( 'tmf_feeds', array() );
-		$google_cat = get_option( 'tmf_google_category', '3101' );
-		$google_cat_name = get_option( 'tmf_google_category_name', 'Vehicles & Parts > Vehicles > Golf Carts' );
+		$google_cat = get_option( 'tmf_google_category', '3931' );
+		$google_cat_name = get_option( 'tmf_google_category_name', 'Vehicles & Parts > Vehicles > Motor Vehicles > Golf Carts' );
 		$secret     = get_option( 'tmf_feed_secret', '' );
 		?>
 		<?php self::render_header( 'Feed Settings' ); ?>
@@ -433,7 +433,7 @@ class TMF_Admin {
 
 				<div class="tmf-card">
 					<h2>Google Product Category</h2>
-					<p>All products will be submitted under this Google Product Category. Default is <code>3101</code> — Vehicles &amp; Parts &gt; Vehicles &gt; Golf Carts.</p>
+					<p>All products will be submitted under this Google Product Category. Default is <code>3931</code> — Vehicles &amp; Parts &gt; Vehicles &gt; Motor Vehicles &gt; Golf Carts.</p>
 					<table class="form-table">
 						<tr>
 							<th>Category ID</th>
@@ -581,7 +581,7 @@ class TMF_Admin {
 							<tr><td><code>g:id</code></td><td>Product ID — <code>get_id()</code></td></tr>
 							<tr><td><code>g:link</code></td><td>Permalink — <code>get_permalink()</code></td></tr>
 							<tr><td><code>g:availability</code></td><td>Stock status — <code>get_stock_status()</code> → in_stock / out_of_stock / backorder</td></tr>
-							<tr><td><code>g:google_product_category</code></td><td>Feed Settings → defaults to <code>3101</code> (Golf Carts)</td></tr>
+							<tr><td><code>g:google_product_category</code></td><td>Feed Settings → defaults to <code>3931</code> (Golf Carts)</td></tr>
 							<tr><td><code>g:product_type</code></td><td>WooCommerce category hierarchy path</td></tr>
 							<tr><td><code>g:item_group_id</code></td><td>Parent product ID — <code>get_parent_id()</code> (for variations)</td></tr>
 							<tr><td><code>g:canonical_link</code></td><td>Parent permalink for variations, own permalink for simple</td></tr>
