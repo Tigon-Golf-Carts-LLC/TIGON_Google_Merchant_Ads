@@ -399,6 +399,23 @@ class TMF_Google_Merchant_API {
 			$attributes['canonicalLink'] = $data['canonical_link'];
 		}
 
+		// Link templates — required by Local Inventory Ads so Google can
+		// generate per-store landing URLs. Must contain {store_code}.
+		if ( ! empty( $data['link_template'] ) ) {
+			$attributes['linkTemplate'] = $data['link_template'];
+		}
+		if ( ! empty( $data['mobile_link_template'] ) ) {
+			$attributes['mobileLinkTemplate'] = $data['mobile_link_template'];
+		}
+
+		// Destination controls — free_local_listings, local_inventory_ads, etc.
+		if ( ! empty( $data['excluded_destinations'] ) ) {
+			$attributes['excludedDestinations'] = array_values( array_map( 'strval', (array) $data['excluded_destinations'] ) );
+		}
+		if ( ! empty( $data['included_destinations'] ) ) {
+			$attributes['includedDestinations'] = array_values( array_map( 'strval', (array) $data['included_destinations'] ) );
+		}
+
 		// Shipping info.
 		$shipping_cost = get_option( 'tmf_default_shipping_cost', '' );
 		if ( ! empty( $shipping_cost ) ) {

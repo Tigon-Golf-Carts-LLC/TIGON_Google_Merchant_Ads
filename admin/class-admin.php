@@ -111,12 +111,32 @@ class TMF_Admin {
 		// --- Save feed settings ------------------------------------------------
 		if ( isset( $_POST['tmf_save_settings'] ) && check_admin_referer( 'tmf_settings_nonce' ) ) {
 			$feeds  = get_option( 'tmf_feeds', array() );
-			$slugs  = array( 'google', 'google-reviews', 'facebook', 'amazon', 'ebay', 'walmart', 'tiktok' );
+			$slugs  = array( 'google', 'google-reviews', 'google-local-inventory', 'facebook', 'amazon', 'ebay', 'walmart', 'tiktok' );
+			$labels = array(
+				'google'                 => 'Google Merchant',
+				'google-reviews'         => 'Google Merchant Reviews',
+				'google-local-inventory' => 'Google Local Inventory',
+				'facebook'               => 'Facebook / Meta',
+				'amazon'                 => 'Amazon',
+				'ebay'                   => 'eBay',
+				'walmart'                => 'Walmart',
+				'tiktok'                 => 'TikTok Shop',
+			);
 			$posted = isset( $_POST['tmf_feeds_enabled'] ) ? (array) $_POST['tmf_feeds_enabled'] : array();
 			foreach ( $slugs as $s ) {
+				if ( ! isset( $feeds[ $s ] ) || ! is_array( $feeds[ $s ] ) ) {
+					$feeds[ $s ] = array( 'label' => $labels[ $s ] );
+				}
 				$feeds[ $s ]['enabled'] = in_array( $s, $posted, true );
 			}
 			update_option( 'tmf_feeds', $feeds );
+
+			if ( isset( $_POST['tmf_link_template'] ) ) {
+				update_option( 'tmf_link_template', esc_url_raw( wp_unslash( $_POST['tmf_link_template'] ) ) );
+			}
+			if ( isset( $_POST['tmf_mobile_link_template'] ) ) {
+				update_option( 'tmf_mobile_link_template', esc_url_raw( wp_unslash( $_POST['tmf_mobile_link_template'] ) ) );
+			}
 
 			if ( isset( $_POST['tmf_google_category'] ) ) {
 				update_option( 'tmf_google_category', sanitize_text_field( wp_unslash( $_POST['tmf_google_category'] ) ) );
@@ -407,13 +427,14 @@ class TMF_Admin {
 					<table class="form-table">
 					<?php
 					$all_slugs = array(
-						'google'         => 'Google Merchant',
-						'google-reviews' => 'Google Merchant Reviews',
-						'facebook'       => 'Facebook / Meta',
-						'amazon'         => 'Amazon',
-						'ebay'           => 'eBay',
-						'walmart'        => 'Walmart',
-						'tiktok'         => 'TikTok Shop',
+						'google'                 => 'Google Merchant',
+						'google-reviews'         => 'Google Merchant Reviews',
+						'google-local-inventory' => 'Google Local Inventory',
+						'facebook'               => 'Facebook / Meta',
+						'amazon'                 => 'Amazon',
+						'ebay'                   => 'eBay',
+						'walmart'                => 'Walmart',
+						'tiktok'                 => 'TikTok Shop',
 					);
 					foreach ( $all_slugs as $s => $lbl ) :
 						$checked = ! empty( $feeds[ $s ]['enabled'] );
@@ -442,6 +463,26 @@ class TMF_Admin {
 						<tr>
 							<th>Category Name</th>
 							<td><input type="text" name="tmf_google_category_name" value="<?php echo esc_attr( $google_cat_name ); ?>" class="regular-text"></td>
+						</tr>
+					</table>
+				</div>
+
+				<div class="tmf-card">
+					<h2>Link Template (Local Inventory Ads)</h2>
+					<p>Google Local Inventory Ads require a <code>link_template</code> URL containing the <code>{store_code}</code> placeholder so Google can build a per-store landing page. Without it, Merchant Center rejects offers with <em>"Missing valid value in [link_template] attribute."</em></p>
+					<table class="form-table">
+						<tr>
+							<th>Desktop Link Template</th>
+							<td>
+								<input type="text" name="tmf_link_template" value="<?php echo esc_attr( get_option( 'tmf_link_template', '' ) ); ?>" class="large-text" placeholder="https://example.com/product/{item_id}?store={store_code}">
+								<p class="description">Must contain <code>{store_code}</code>. You may also use <code>{item_id}</code>.</p>
+							</td>
+						</tr>
+						<tr>
+							<th>Mobile Link Template</th>
+							<td>
+								<input type="text" name="tmf_mobile_link_template" value="<?php echo esc_attr( get_option( 'tmf_mobile_link_template', '' ) ); ?>" class="large-text" placeholder="Optional — defaults to desktop template">
+							</td>
 						</tr>
 					</table>
 				</div>
@@ -508,6 +549,11 @@ class TMF_Admin {
 			'custom_label_2'            => 'Custom Label 2 (g:custom_label_2)',
 			'custom_label_3'            => 'Custom Label 3 (g:custom_label_3)',
 			'custom_label_4'            => 'Custom Label 4 (g:custom_label_4)',
+			// --- Local Inventory Ads ---
+			'link_template'             => 'Link Template (g:link_template)',
+			'mobile_link_template'      => 'Mobile Link Template (g:mobile_link_template)',
+			'excluded_destinations'     => 'Excluded Destinations (g:excluded_destination)',
+			'included_destinations'     => 'Included Destinations (g:included_destination)',
 		);
 		?>
 		<?php self::render_header( 'Field Mapping', 'Override default WooCommerce field mapping with custom meta keys.' ); ?>
@@ -553,6 +599,10 @@ class TMF_Admin {
 							'custom_label_2'          => '_custom_label_2 meta',
 							'custom_label_3'          => '_custom_label_3 meta',
 							'custom_label_4'          => '_custom_label_4 meta',
+							'link_template'           => '_tmf_link_template meta → Feed Settings default',
+							'mobile_link_template'    => '_tmf_mobile_link_template meta → Feed Settings default',
+							'excluded_destinations'   => '_tmf_excluded_destinations meta (array or CSV)',
+							'included_destinations'   => '_tmf_included_destinations meta (array or CSV)',
 						);
 						foreach ( $fields as $key => $label ) : ?>
 							<tr>
@@ -902,6 +952,22 @@ class TMF_Admin {
 					<h3>How to Assign Products to Stores</h3>
 					<p>Add a custom field named <code>_tmf_store</code> to any WooCommerce product with the store ID as the value. Products without a store assignment will sync under "All Stores".</p>
 					<p>You can bulk-assign stores using any WooCommerce bulk edit tool or via the product edit screen.</p>
+				</div>
+
+				<div class="tmf-card tmf-card-muted">
+					<h3>Per-Store Local Inventory Data</h3>
+					<p>The <strong>Google Local Inventory</strong> feed emits one row per <code>(product, store)</code> pair and is required by Merchant Center if you have added the <em>Free local listings</em> or <em>Local inventory ads</em> add-ons. Each row includes the required attributes <code>store_code</code>, <code>id</code>, <code>quantity</code>, and <code>availability</code>.</p>
+					<p>You have two options to populate inventory:</p>
+					<ol>
+						<li>Assign a single store per product via <code>_tmf_store</code>. The plugin will reuse the product-level stock count and availability for that store.</li>
+						<li>Provide a per-store override by saving a serialized array to the product meta key <code>_tmf_store_inventory</code>:
+							<pre>array(
+    'store-tampa'   => array( 'quantity' => 3, 'availability' => 'in stock',       'price' => 12999 ),
+    'store-orlando' => array( 'quantity' => 0, 'availability' => 'out of stock' ),
+);</pre>
+						</li>
+					</ol>
+					<p>To <em>exclude</em> a product from local destinations, set the <code>_tmf_excluded_destinations</code> meta to a comma-separated list (for example <code>free_local_listings,local_inventory_ads</code>). If you do not operate any physical store, remove the <em>Free local listings</em> and <em>Local inventory ads</em> add-ons from Merchant Center and leave the Google Local Inventory feed disabled.</p>
 				</div>
 			</form>
 		</div>
