@@ -525,9 +525,15 @@ class TMF_Google_Merchant_API {
 		$account_id  = self::get_account_id();
 		$data_source = get_option( 'tmf_google_data_source', '' );
 
-		if ( is_wp_error( $account_id ) || empty( $data_source ) ) {
-			self::log( 'Sync aborted: missing account ID or data source.' );
-			return array( 'error' => 'Missing configuration.' );
+		if ( is_wp_error( $account_id ) ) {
+			$msg = $account_id->get_error_message();
+			self::log( 'Sync aborted: ' . $msg );
+			return array( 'error' => $msg );
+		}
+		if ( empty( $data_source ) ) {
+			$msg = 'No API data source configured. Create one in TIGON Feeds > Google API.';
+			self::log( 'Sync aborted: ' . $msg );
+			return array( 'error' => $msg );
 		}
 
 		$args = array(
