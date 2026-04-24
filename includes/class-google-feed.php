@@ -245,6 +245,35 @@ class TMF_Google_Feed extends TMF_Feed_Generator {
 				$xml .= '  <g:ads_redirect>' . esc_url( $data['ads_redirect'] ) . "</g:ads_redirect>\n";
 			}
 
+			// g:link_template / g:mobile_link_template — required for Local Inventory Ads
+			// to serve. Must contain {store_code} so Google can generate the
+			// per-store landing URL.
+			if ( ! empty( $data['link_template'] ) ) {
+				$xml .= '  <g:link_template>' . $this->xml_escape( $data['link_template'] ) . "</g:link_template>\n";
+			}
+			if ( ! empty( $data['mobile_link_template'] ) ) {
+				$xml .= '  <g:mobile_link_template>' . $this->xml_escape( $data['mobile_link_template'] ) . "</g:mobile_link_template>\n";
+			}
+
+			// g:excluded_destination / g:included_destination — opt products out
+			// of free_local_listings, local_inventory_ads, shopping_ads, etc.
+			if ( ! empty( $data['excluded_destinations'] ) ) {
+				foreach ( (array) $data['excluded_destinations'] as $dest ) {
+					$dest = trim( (string) $dest );
+					if ( '' !== $dest ) {
+						$xml .= '  <g:excluded_destination>' . esc_xml( $dest ) . "</g:excluded_destination>\n";
+					}
+				}
+			}
+			if ( ! empty( $data['included_destinations'] ) ) {
+				foreach ( (array) $data['included_destinations'] as $dest ) {
+					$dest = trim( (string) $dest );
+					if ( '' !== $dest ) {
+						$xml .= '  <g:included_destination>' . esc_xml( $dest ) . "</g:included_destination>\n";
+					}
+				}
+			}
+
 			// g:energy_efficiency_class — for electric golf carts
 			if ( ! empty( $data['energy_efficiency_class'] ) ) {
 				$xml .= '  <g:energy_efficiency_class>' . esc_xml( $data['energy_efficiency_class'] ) . "</g:energy_efficiency_class>\n";

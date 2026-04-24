@@ -38,6 +38,7 @@ function tmf_load() {
 	require_once TMF_PLUGIN_DIR . 'includes/class-feed-generator.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-google-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-google-reviews-feed.php';
+	require_once TMF_PLUGIN_DIR . 'includes/class-local-inventory-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-facebook-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-amazon-feed.php';
 	require_once TMF_PLUGIN_DIR . 'includes/class-ebay-feed.php';
@@ -73,13 +74,14 @@ function tmf_activate() {
 		update_option( 'tmf_feed_secret', wp_generate_password( 24, false ) );
 	}
 	$defaults = array(
-		'google'         => array( 'enabled' => true, 'label' => 'Google Merchant' ),
-		'google-reviews' => array( 'enabled' => true, 'label' => 'Google Merchant Reviews' ),
-		'facebook'       => array( 'enabled' => true, 'label' => 'Facebook / Meta' ),
-		'amazon'         => array( 'enabled' => true, 'label' => 'Amazon' ),
-		'ebay'           => array( 'enabled' => true, 'label' => 'eBay' ),
-		'walmart'        => array( 'enabled' => true, 'label' => 'Walmart' ),
-		'tiktok'         => array( 'enabled' => true, 'label' => 'TikTok Shop' ),
+		'google'                  => array( 'enabled' => true, 'label' => 'Google Merchant' ),
+		'google-reviews'          => array( 'enabled' => true, 'label' => 'Google Merchant Reviews' ),
+		'google-local-inventory'  => array( 'enabled' => false, 'label' => 'Google Local Inventory' ),
+		'facebook'                => array( 'enabled' => true, 'label' => 'Facebook / Meta' ),
+		'amazon'                  => array( 'enabled' => true, 'label' => 'Amazon' ),
+		'ebay'                    => array( 'enabled' => true, 'label' => 'eBay' ),
+		'walmart'                 => array( 'enabled' => true, 'label' => 'Walmart' ),
+		'tiktok'                  => array( 'enabled' => true, 'label' => 'TikTok Shop' ),
 	);
 	if ( ! get_option( 'tmf_feeds' ) ) {
 		update_option( 'tmf_feeds', $defaults );

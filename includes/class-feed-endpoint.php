@@ -83,13 +83,14 @@ class TMF_Feed_Endpoint {
 	 */
 	public static function get_generator( $slug ) {
 		$built_in = array(
-			'google'         => 'TMF_Google_Feed',
-			'google-reviews' => 'TMF_Google_Reviews_Feed',
-			'facebook'       => 'TMF_Facebook_Feed',
-			'amazon'         => 'TMF_Amazon_Feed',
-			'ebay'           => 'TMF_Ebay_Feed',
-			'walmart'        => 'TMF_Walmart_Feed',
-			'tiktok'         => 'TMF_Tiktok_Feed',
+			'google'                 => 'TMF_Google_Feed',
+			'google-reviews'         => 'TMF_Google_Reviews_Feed',
+			'google-local-inventory' => 'TMF_Local_Inventory_Feed',
+			'facebook'               => 'TMF_Facebook_Feed',
+			'amazon'                 => 'TMF_Amazon_Feed',
+			'ebay'                   => 'TMF_Ebay_Feed',
+			'walmart'                => 'TMF_Walmart_Feed',
+			'tiktok'                 => 'TMF_Tiktok_Feed',
 		);
 
 		if ( isset( $built_in[ $slug ] ) ) {

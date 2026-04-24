@@ -438,6 +438,33 @@ class TMF_Field_Mapper {
 		$ads_redirect = $product->get_meta( '_ads_redirect', true );
 
 		// =====================================================================
+		//  Link templates (required for Local Inventory Ads to serve).
+		//  Per-product override falls back to the site-wide template option.
+		// =====================================================================
+		$link_template        = $product->get_meta( '_tmf_link_template', true );
+		$mobile_link_template = $product->get_meta( '_tmf_mobile_link_template', true );
+		if ( empty( $link_template ) ) {
+			$link_template = get_option( 'tmf_link_template', '' );
+		}
+		if ( empty( $mobile_link_template ) ) {
+			$mobile_link_template = get_option( 'tmf_mobile_link_template', '' );
+		}
+
+		// =====================================================================
+		//  Destination exclusions — turn off free_local_listings /
+		//  local_inventory_ads / shopping_ads / free_listings per product.
+		// =====================================================================
+		$excluded_destinations = $product->get_meta( '_tmf_excluded_destinations', true );
+		if ( ! is_array( $excluded_destinations ) ) {
+			$excluded_destinations = array_filter( array_map( 'trim', preg_split( '/[,\s]+/', (string) $excluded_destinations ) ) );
+		}
+
+		$included_destinations = $product->get_meta( '_tmf_included_destinations', true );
+		if ( ! is_array( $included_destinations ) ) {
+			$included_destinations = array_filter( array_map( 'trim', preg_split( '/[,\s]+/', (string) $included_destinations ) ) );
+		}
+
+		// =====================================================================
 		//  Energy efficiency (relevant for electric golf carts)
 		// =====================================================================
 		$energy_efficiency = $product->get_meta( '_energy_efficiency_class', true );
@@ -513,6 +540,12 @@ class TMF_Field_Mapper {
 			'custom_label_3'            => $custom_labels[3],
 			'custom_label_4'            => $custom_labels[4],
 			'ads_redirect'              => $ads_redirect,
+
+			// --- Local Inventory Ads ---
+			'link_template'             => $link_template,
+			'mobile_link_template'      => $mobile_link_template,
+			'excluded_destinations'     => $excluded_destinations,
+			'included_destinations'     => $included_destinations,
 
 			// --- Energy efficiency (electric golf carts) ---
 			'energy_efficiency_class'   => $energy_efficiency,
